@@ -145,7 +145,18 @@ namespace MountedWeapons
                     turretAccuracy = def.GetStatValueAbstract(StatDefOf.ShootingAccuracyTurret),
                 };
             }
-            MountSettings.Get.Apply();
+            // A saved entry equal to the def's values carries no player choice; dropping it
+            // lets a later XML or balance patch through. Also clears entries that older
+            // builds saved just for opening the tab.
+            MountSettings s = MountSettings.Get;
+            foreach (string key in s.tunings.Keys.ToList())
+            {
+                if (MountSettings.Defaults.TryGetValue(key, out MountTuning d) && s.tunings[key].SameAs(d))
+                {
+                    s.tunings.Remove(key);
+                }
+            }
+            s.Apply();
         }
     }
 }

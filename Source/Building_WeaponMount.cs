@@ -118,12 +118,17 @@ namespace MountedWeapons
             FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
         }
 
-        public void Notify_SettingsChanged()
+        private void RescaleRanges()
         {
             for (int i = 0; i < appliedProps.Count; i++)
             {
                 appliedProps[i].range = baseRanges[i] * Ext.rangeMultiplier;
             }
+        }
+
+        public void Notify_SettingsChanged()
+        {
+            RescaleRanges();
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
                 ResetTargeting();
@@ -134,6 +139,9 @@ namespace MountedWeapons
         {
             base.SpawnSetup(map, respawningAfterLoad);
             PrepareMountedWeapon();
+            // A mount reinstalled from a minified item keeps its clones; settings may have
+            // changed while it was packed up.
+            RescaleRanges();
         }
 
         public override void ExposeData()
@@ -153,7 +161,7 @@ namespace MountedWeapons
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
                 // A forced target walked out of the arc.
-                forcedTarget = LocalTargetInfo.Invalid;
+                ResetTargeting();
             }
             base.Tick();
             if (Spawned && !FiringArc.Unlimited(Arc))

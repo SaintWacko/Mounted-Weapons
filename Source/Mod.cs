@@ -165,8 +165,13 @@ namespace MountedWeapons
             Text.Anchor = TextAnchor.UpperRight;
             Widgets.Label(row.RightPart(0.25f), shown);
             Text.Anchor = TextAnchor.UpperLeft;
-            value = l.Slider(value, min, max);
-            value = Mathf.Clamp(GenMath.RoundTo(value, roundTo), min, max);
+            // Only snap when the player moves the slider, so an off-grid value from XML
+            // isn't rewritten just by opening the tab.
+            float moved = l.Slider(value, min, max);
+            if (moved != value)
+            {
+                value = Mathf.Clamp(GenMath.RoundTo(moved, roundTo), min, max);
+            }
             Hint(l, hint);
         }
     }

@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "buildId": 6,
+  "buildIdNote": null,
+  "reviewedAt": "2026-10-06T17:43:10.425Z",
+  "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee",
+  "focus": "firing arc (TryFindNewTarget override, Tick clamp, OrderAttack/Fire rejection), WeaponArtCentroid render-texture readback and centroid math vs DrawEquipmentAiming, settings apply/defaults timing",
+  "diffSource": "since build 3 (2026-10-06T16:44:53Z), the last reviewed build, from the build log",
+  "parsed": true,
+  "problem": null,
+  "stoppedBecause": null,
+  "counts": {
+    "must": 0,
+    "should": 2,
+    "note": 9
+  },
+  "findings": [
+    {
+      "severity": "should",
+      "title": "Range setting is not reapplied to a mount that was off-map (minified) when settings changed",
+      "detail": "MountSettings.Apply only calls Notify_SettingsChanged on buildings spawned on a map. A mount that is uninstalled (it has a minifiedDef) keeps its gun and its cloned VerbProperties. On reinstall, SpawnSetup -> PrepareMountedWeapon skips the rescale because appliedProps already contains each verb's props, so the old range stays until the save is reloaded. In SpawnSetup, after PrepareMountedWeapon(), set appliedProps[i].range = baseRanges[i] * Ext.rangeMultiplier (the loop already in Notify_SettingsChanged).",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Building_WeaponMount.cs:133"
+      }
+    },
+    {
+      "severity": "should",
+      "title": "Apply() saves every mount's XML values into the settings, so later XML or balance-patch changes are ignored",
+      "detail": "Apply calls TuningFor(def) for every mount at startup (MountSettings.cs:100). TuningFor copies Defaults into `tunings` when the mount has no entry (MountSettings.cs:64-70). The next WriteSettings (on settings-window close) saves all of them, so after one visit to the settings window, a mod update or another mod's patch to rangeMultiplier, warmupFactor or ShootingAccuracyTurret no longer takes effect for that player. That contradicts the class comment that a balance patch is respected. One change: in Apply, read tunings.TryGetValue(...) and fall back to Defaults[def.defName] without inserting; leave the inserting TuningFor for the settings UI in DoMounts.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/MountSettings.cs:100"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "ArtCentroidWorld leaves out the recoil angle that DrawEquipmentAiming adds",
+      "detail": "DrawEquipmentAiming adds EquipmentUtility.Recoil's angleOffset to the rotation after the mesh choice. The centroid offset is computed without it, so during recoil the art turns about a point slightly off its centroid. The error is about |centroid| x recoil angle, a few hundredths of a cell. Only visible on strongly off-centre art such as the minigun.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Building_WeaponMount.cs:424"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "Arc is checked only when a burst starts; later shots can follow a target out of the arc",
+      "detail": "Fire() checks InArc once before TryStartCastOn. Base Tick returns early while the verb is Bursting, so later shots in a burst can track a target past the arc edge. The drawn rotation stays clamped by the Tick clamp, so the shots and the gun's drawn aim can disagree for the rest of the burst.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Building_WeaponMount.cs:286"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "Tick clears forcedTarget without resetting warmup or currentTarget",
+      "detail": "Vanilla's ResetForcedTarget also zeroes burstWarmupTicksLeft. Here currentTargetInt keeps pointing at the target that left the arc, so the gun sits at the arc edge until the warmup ends and Fire() calls ResetTargeting. It recovers by itself; calling ResetTargeting() here, as Notify_SettingsChanged does, would drop the target straight away.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Building_WeaponMount.cs:152"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "One shared DrawField cache rebuilds every frame when several mounts with different facings are selected",
+      "detail": "The cells/cachedCenter/cachedRot cache is static and shared by every selected mount and the placement ghost. Two selected mounts make it rebuild (2r+1)^2 cells per mount per frame. With a 2x range multiplier r can be about 60. That costs some performance but causes no errors.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/FiringArc.cs:41"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "MountExtension's per-def destruction fields are no longer read",
+      "detail": "Destroy now reads MountSettings.Get.maxWeaponDamage and coreLossChance. MountExtension.maxWeaponDamageWhenKilled and coreLossChanceWhenKilled are still declared but nothing reads them, so a def or another mod's patch that sets them is silently ignored.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/MountExtension.cs:42"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "Slider snaps and clamps values on every draw, so viewing a mount tab changes off-grid values",
+      "detail": "Slider sets value = Clamp(RoundTo(l.Slider(...), roundTo), min, max) on every repaint, not only when dragged. An XML or patched value off the 0.05 grid, or below the 1.0 range minimum, is rewritten just by opening the tab, then saved on close. Your own defs' values all sit on the grids, so this only bites other mods' patches. Only writing back when l.Slider's result differs from the input would avoid it.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Mod.cs:169"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "Settings refresh only reaches colonist-owned mounts",
+      "detail": "Apply loops listerBuildings.AllBuildingsColonistOfClass<Building_WeaponMount>(), which walks allBuildingsColonist only. A mount owned by another faction keeps its old range clones (appliedProps) until reload. Iterating map.listerThings for the def, or allBuildingsNonColonist as well, would cover them.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/MountSettings.cs:113"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "Arc changes apply mid-drag; range, aim and accuracy apply only on window close",
+      "detail": "ArcFor is read live by Building_WeaponMount.Arc (Building_WeaponMount.cs:73), so arc slider changes affect targeting while the window is still open. Range, aim and accuracy reach the defs only through WriteSettings → Apply on PreClose, and that is also when out-of-arc forced targets are reset. It is consistent once the window closes, so this is harmless; worth knowing if someone reports the arc changing before the rest.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/Mod.cs:27"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "MountExtension.coreLossChanceWhenKilled / maxWeaponDamageWhenKilled are now dead XML fields",
+      "detail": "Building_WeaponMount now reads MountSettings.Get.coreLossChance and maxWeaponDamage (Building_WeaponMount.cs:377, 391). Nothing reads the per-def extension fields any more, so an XML patch that sets them silently does nothing. No def in this mod sets them.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/MountExtension.cs:42"
+      }
+    }
+  ],
+  "checked": [
+    "TryFindNewTarget override: matches Building_TurretGun.TryFindNewTarget (flags, searcher like TargSearcher) and IsValidMountTarget matches the private IsValidTarget; skipping IsMortar loses nothing fo…",
+    "OrderAttack: arc rejection runs before the base; comparing forcedTarget after the base correctly ignores orders vanilla rejects for min/max range",
+    "Tick clamp runs after base.Tick/TurretTopTick, so both tracking and idle sweeps are clamped; Rot4.AsAngle, AngleFlat and CurRotation all use 0 = north, clockwise",
+    "FiringArc.Contains/Clamp: DeltaAngle use and normalisation are correct; mounts are 1x1 (no <size> in Defs), so DrawPos and Position.ToVector3Shifted agree",
+    "ArtCentroidWorld vs PawnRenderUtility.DrawEquipmentAiming: same flip range, angle offsets, TRS scale-then-rotate order and material choice; flipped-x sign matches MeshMakerPlanes plane10Flip UVs",
+    "WeaponArtCentroid.Measure: DrawAt runs on the main thread in DynamicDrawManager's Draw phase (the parallel job only does pre-draw); RenderTexture.active is restored, the temporary is released, the re…",
+    "Notify_SettingsChanged: baseRanges and appliedProps are always added to and cleared together (PrepareMountedWeapon, InstallWeapon, RemoveWeapon), so indexing is safe; repeated PrepareMountedWeapon ca…",
+    "Settings timing: defaults recorded in a [StaticConstructorOnStartup] after XML patches, then applied; the Mod constructor only calls GetSettings; Apply guards Defaults.Count == 0 and Current.Game == …",
+    "PlaceWorker_FiringArc: added to the abstract base def; MW_MannedMountBase's own placeWorkers list is appended to it under XML inheritance",
+    "Every new Keyed string used in Building_WeaponMount.cs and Mod.cs exists in Languages/English/Keyed/MountedWeapons.xml",
+    "WeaponChoices: claimed weapons get a null-action FloatMenuOption, which vanilla shows disabled",
+    "No Harmony patches in the diff, so verify_patches and precedents were not needed; pyxis_mod_errors could not run (no Pyxis token configured)",
+    "Mod constructor: GetSettings<MountSettings>() only scribes floats, bools and a string→MountTuning dictionary, with no def or DefOf access (lint defof-in-mod-ctor)",
+    "MountSettingsStartup runs under [StaticConstructorOnStartup] after defs load; Apply is guarded by Defaults.Count == 0",
+    "Mount spawn and load (SpawnSetup / PostLoadInit PrepareMountedWeapon) read Ext after the startup Apply, so saved tunings apply to loaded maps",
+    "StatUtility.SetStatValueInList handles a null statBases list",
+    "ShootingAccuracyTurret is not an immutable stat (StatWorker immutableStatCache is null for it), so changing statBases takes effect on spawned turrets; ShotReport reads it live",
+    "Dialog_ModSettings.PreClose calls WriteSettings, so the Apply in WriteSettings runs once per window close",
+    "Settings window layout: Dialog_ModSettings passes a rect starting at y=40 above the close button; tab strip, body and the reset button at yMax-32 do not overlap",
+    "Text.Font, Text.Anchor and GUI.color are restored after each Section/Hint/Slider",
+    "Scribe_Collections Look with LookMode.Value/Deep on Dictionary<string, MountTuning>; null guard after load; global values clamped on load",
+    "Slider ranges contain every shipped XML default (range 1.15–1.35, stability 0.2–0.5, aim 0.7–1.0, turret accuracy 0.95–0.987)",
+    "Biotech gating: Automated tab and its sliders hidden when no automated mount defs exist; tab falls back to General",
+    "No Harmony patches declared in the changed C#",
+    "Pyxis error snapshot not available: no Pyxis token configured"
+  ],
+  "unreviewed": [],
+  "outOfScope": [],
+  "reviewed": [
+    "Source/Building_WeaponMount.cs",
+    "Source/FiringArc.cs",
+    "Source/Mod.cs",
+    "Source/MountSettings.cs",
+    "Defs/ThingDefs_Buildings/MW_MountBases.xml",
+    "Languages/English/Keyed/MountedWeapons.xml",
+    "Assemblies/MountedWeapons.dll",
+    "Assemblies/MountedWeapons.pdb",
+    "Source/MountedWeapons.csproj"
+  ],
+  "parts": 2,
+  "buildCommit": "a756cd26a618f58824e9210a0ed4d24d54503fc1",
+  "partial": false
+}

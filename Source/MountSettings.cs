@@ -97,7 +97,9 @@ namespace MountedWeapons
             if (Defaults.Count == 0) return; // defs not loaded yet
             foreach (ThingDef def in MountDefs)
             {
-                MountTuning t = TuningFor(def);
+                // Read without inserting: only mounts the player has opened in the window
+                // get a saved entry, so XML and balance patches keep working for the rest.
+                if (!tunings.TryGetValue(def.defName, out MountTuning t) && !Defaults.TryGetValue(def.defName, out t)) continue;
                 MountExtension ext = def.GetModExtension<MountExtension>();
                 ext.rangeMultiplier = t.rangeMultiplier;
                 ext.stability = t.stability;
@@ -110,9 +112,9 @@ namespace MountedWeapons
             if (Current.Game == null) return;
             foreach (Map map in Find.Maps)
             {
-                foreach (Building_WeaponMount mount in map.listerBuildings.AllBuildingsColonistOfClass<Building_WeaponMount>())
+                foreach (Thing thing in map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial))
                 {
-                    mount.Notify_SettingsChanged();
+                    (thing as Building_WeaponMount)?.Notify_SettingsChanged();
                 }
             }
         }

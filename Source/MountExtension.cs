@@ -38,11 +38,8 @@ namespace MountedWeapons
         /// </summary>
         public ThingDef coreDef;
 
-        /// <summary>Chance the core is lost when the mount is destroyed in combat.</summary>
-        public float coreLossChanceWhenKilled = 0.5f;
-
-        /// <summary>Upper bound on the fraction of max HP a mounted weapon loses when the mount is destroyed.</summary>
-        public float maxWeaponDamageWhenKilled = 0.4f;
+        // Core loss chance and weapon damage on destruction are global mod settings
+        // (MountSettings), not per-def.
 
         /// <summary>Where the weapon sits on the base art, in cells, for a north-facing mount.</summary>
         public Vector2 weaponDrawOffset = Vector2.zero;

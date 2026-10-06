@@ -1,0 +1,35 @@
+<style>
+  .win{width:860px}
+  .body{border:1px solid var(--rw-line);background:var(--rw-panel);padding:10px 12px;min-height:420px}
+  .sec{font-size:18px;margin:8px 0 2px}
+  .sec + hr{border:0;border-top:1px solid var(--rw-line);margin:0 0 6px}
+  .srow{display:flex;justify-content:space-between}
+  .hint{font-size:11px;color:var(--rw-ink-dim);margin:2px 0 8px}
+  .rw-slider{margin:4px 0}
+  .foot{margin-top:8px}
+</style>
+<div class="rw-window rw-vanilla win">
+  <div class="rw-tabs"><span class="rw-tab is-on">General</span><span class="rw-tab">Manned mounts</span><span class="rw-tab">Automated mounts</span></div>
+  <div class="body">
+    <div class="sec">Firing arcs</div><hr>
+    <div class="srow"><span>Manned mount firing arc</span><span>120°</span></div>
+    <div class="rw-slider"><div class="rw-fill" style="width:27%"></div></div>
+    <div class="hint">Total angle a manned mount can fire across, centred on the direction it faces. The gunner stands behind it, so they can't swing it round past themselves.</div>
+    <div class="srow"><span>Automated mount firing arc</span><span>Unlimited</span></div>
+    <div class="rw-slider"><div class="rw-fill" style="width:100%"></div></div>
+    <div class="hint">Total angle an automated mount can fire across, centred on the direction it faces.</div>
+
+    <div class="sec">When a mount is destroyed</div><hr>
+    <div class="srow"><span>Most damage to the mounted weapon</span><span>40%</span></div>
+    <div class="rw-slider"><div class="rw-fill" style="width:40%"></div></div>
+    <div class="hint">The weapon drops beside the wreck and loses a random share of its hit points, up to this much. It is never destroyed this way.</div>
+    <div class="srow"><span>Chance to lose the core</span><span>50%</span></div>
+    <div class="rw-slider"><div class="rw-fill" style="width:50%"></div></div>
+    <div class="hint">For automated mounts destroyed in combat. Deconstructing a mount always returns its core.</div>
+
+    <div class="sec">Display</div><hr>
+    <div class="srow"><span>Center weapon art on the mount</span><span class="rw-check"><span class="rw-box is-on"></span></span></div>
+    <div class="hint">Turns the weapon around the middle of its art instead of the middle of its texture. Fixes weapons like the minigun that are drawn off to one side.</div>
+  </div>
+  <div class="foot"><span class="rw-btn">Reset this tab</span></div>
+</div>

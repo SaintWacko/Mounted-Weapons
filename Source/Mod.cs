@@ -119,7 +119,11 @@ namespace MountedWeapons
             l.Gap(6f);
             foreach (ThingDef def in MountSettings.MountDefs.Where(d => MountSettings.IsManned(d) == manned))
             {
-                MountTuning t = Settings.TuningFor(def);
+                // Edit a copy and save it only once it differs from the def's own values,
+                // so viewing the tab doesn't freeze XML values into the settings file.
+                bool saved = Settings.tunings.TryGetValue(def.defName, out MountTuning t);
+                MountTuning baseline = MountSettings.Defaults.TryGetValue(def.defName, out MountTuning d) ? d : new MountTuning();
+                if (!saved) t = baseline.Copy();
                 Section(l, def.LabelCap);
                 Slider(l, "MW_Settings_Range".Translate(), ref t.rangeMultiplier, 1f, 2f, t.rangeMultiplier.ToStringPercent(), null, 0.05f);
                 if (manned)
@@ -132,6 +136,10 @@ namespace MountedWeapons
                         "MW_Settings_AccuracyHint".Translate(), 0.001f);
                 }
                 Slider(l, "MW_Settings_Aim".Translate(), ref t.warmupFactor, 0.25f, 1.5f, t.warmupFactor.ToStringPercent(), null, 0.05f);
+                if (!saved && !t.SameAs(baseline))
+                {
+                    Settings.tunings[def.defName] = t;
+                }
                 l.Gap();
             }
         }

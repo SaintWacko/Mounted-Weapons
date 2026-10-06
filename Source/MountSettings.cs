@@ -17,6 +17,10 @@ namespace MountedWeapons
 
         public MountTuning Copy() => (MountTuning)MemberwiseClone();
 
+        public bool SameAs(MountTuning o) =>
+            rangeMultiplier == o.rangeMultiplier && stability == o.stability
+            && warmupFactor == o.warmupFactor && turretAccuracy == o.turretAccuracy;
+
         public void ExposeData()
         {
             Scribe_Values.Look(ref rangeMultiplier, "range", 1f);
@@ -61,16 +65,6 @@ namespace MountedWeapons
 
         public float ArcFor(ThingDef def) => IsManned(def) ? mannedArc : automatedArc;
 
-        public MountTuning TuningFor(ThingDef def)
-        {
-            if (!tunings.TryGetValue(def.defName, out MountTuning t))
-            {
-                t = Defaults.TryGetValue(def.defName, out MountTuning d) ? d.Copy() : new MountTuning();
-                tunings[def.defName] = t;
-            }
-            return t;
-        }
-
         public void ResetGeneral()
         {
             mannedArc = DefaultMannedArc;
@@ -82,12 +76,10 @@ namespace MountedWeapons
 
         public void ResetMounts(bool manned)
         {
+            // Dropping the saved entry returns the mount to whatever its def says now.
             foreach (ThingDef def in MountDefs.Where(d => IsManned(d) == manned))
             {
-                if (Defaults.TryGetValue(def.defName, out MountTuning d))
-                {
-                    tunings[def.defName] = d.Copy();
-                }
+                tunings.Remove(def.defName);
             }
         }
 

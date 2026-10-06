@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <ThingDef ParentName="MW_MannedMountBase">
+    <defName>MW_WeaponMount</defName>
+    <label>weapon mount</label>
+    <description>A braced rest for a handheld ranged weapon. A colonist mans it from behind and fires the mounted weapon at 115% of its normal range.\n\nThe mount steadies the gunner's aim: their own shooting accuracy applies, and the mount removes 20% of their misses. It gives the gunner light cover from the front.\n\nChoose a weapon with the mount selected and a hauler brings it over.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_WeaponMount</texPath>
+    </graphicData>
+    <stuffCategories>
+      <li>Woody</li>
+      <li>Metallic</li>
+    </stuffCategories>
+    <costStuffCount>40</costStuffCount>
+    <fillPercent>0.4</fillPercent>
+    <statBases>
+      <MaxHitPoints>120</MaxHitPoints>
+      <Flammability>1</Flammability>
+      <WorkToBuild>1200</WorkToBuild>
+      <Mass>12</Mass>
+      <Beauty>-5</Beauty>
+    </statBases>
+    <researchPrerequisites>
+      <li>MW_WeaponMounts</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <rangeMultiplier>1.15</rangeMultiplier>
+        <stability>0.2</stability>
+        <warmupFactor>1.0</warmupFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_MannedMountBase">
+    <defName>MW_WeaponMountReinforced</defName>
+    <label>reinforced weapon mount</label>
+    <description>A heavy machined mount with a recoil-absorbing cradle and a sandbagged front. A colonist mans it from behind and fires the mounted weapon at 125% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the mount removes 35% of their misses and cuts aiming time by 10%. It gives the gunner medium cover from the front.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_WeaponMountReinforced</texPath>
+    </graphicData>
+    <stuffCategories>
+      <li>Metallic</li>
+      <li>Stony</li>
+    </stuffCategories>
+    <costStuffCount>60</costStuffCount>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <fillPercent>0.55</fillPercent>
+    <constructionSkillPrerequisite>4</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <Flammability>0.5</Flammability>
+      <WorkToBuild>2500</WorkToBuild>
+      <Mass>25</Mass>
+      <Beauty>-8</Beauty>
+    </statBases>
+    <researchPrerequisites>
+      <li>MW_ReinforcedMounts</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <rangeMultiplier>1.25</rangeMultiplier>
+        <stability>0.35</stability>
+        <warmupFactor>0.9</warmupFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_MannedMountBase">
+    <defName>MW_GunEmplacement</defName>
+    <label>armored gun emplacement</label>
+    <description>A plasteel-shielded emplacement with a stabilized gun cradle. A colonist mans it from behind the shield and fires the mounted weapon at 135% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the emplacement removes 50% of their misses and cuts aiming time by 20%. The shield gives the gunner heavy cover from the front.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_GunEmplacement</texPath>
+    </graphicData>
+    <costList>
+      <Steel>100</Steel>
+      <Plasteel>50</Plasteel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+    </costList>
+    <fillPercent>0.75</fillPercent>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>500</MaxHitPoints>
+      <Flammability>0.2</Flammability>
+      <WorkToBuild>5000</WorkToBuild>
+      <Mass>45</Mass>
+      <Beauty>-10</Beauty>
+    </statBases>
+    <researchPrerequisites>
+      <li>MW_ArmoredEmplacements</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <rangeMultiplier>1.35</rangeMultiplier>
+        <stability>0.5</stability>
+        <warmupFactor>0.8</warmupFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+</Defs>

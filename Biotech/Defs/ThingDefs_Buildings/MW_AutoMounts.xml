@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- Automated mounts: a core aims the weapon instead of a gunner. The core is in the
+       cost list and on the leavingsBlacklist; Building_WeaponMount returns it on
+       deconstruction and loses it on a 50% roll when the mount is destroyed. -->
+  <ThingDef Name="MW_AutoMountBase" ParentName="MW_WeaponMountBase" Abstract="True">
+    <fillPercent>0.5</fillPercent>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Flickable"/>
+      <li Class="CompProperties_Breakdownable"/>
+      <li Class="CompProperties_Stunnable">
+        <affectedDamageDefs>
+          <li>Stun</li>
+          <li>EMP</li>
+        </affectedDamageDefs>
+      </li>
+    </comps>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_AutoMountBase">
+    <defName>MW_AutoMountBasic</defName>
+    <label>basic auto-mount</label>
+    <description>A powered weapon mount run by a basic subcore. It aims and fires the mounted weapon on its own at 120% of its normal range, with the accuracy of a level 6 shooter.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_AutoMountBasic</texPath>
+    </graphicData>
+    <costList>
+      <Steel>120</Steel>
+      <ComponentIndustrial>3</ComponentIndustrial>
+      <SubcoreBasic>1</SubcoreBasic>
+    </costList>
+    <constructionSkillPrerequisite>5</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <Flammability>0.5</Flammability>
+      <WorkToBuild>3000</WorkToBuild>
+      <Mass>30</Mass>
+      <Beauty>-10</Beauty>
+      <ShootingAccuracyTurret>0.95</ShootingAccuracyTurret>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>150</basePowerConsumption>
+      </li>
+    </comps>
+    <building>
+      <leavingsBlacklist>
+        <li>SubcoreBasic</li>
+      </leavingsBlacklist>
+    </building>
+    <researchPrerequisites>
+      <li>MW_AutomatedMounts</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <coreDef>SubcoreBasic</coreDef>
+        <rangeMultiplier>1.2</rangeMultiplier>
+        <warmupFactor>1.0</warmupFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_AutoMountBase">
+    <defName>MW_AutoMountStandard</defName>
+    <label>standard auto-mount</label>
+    <description>A powered weapon mount run by a standard subcore. It aims and fires the mounted weapon on its own at 125% of its normal range, with the accuracy of a level 10 shooter and 10% faster aiming.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_AutoMountStandard</texPath>
+    </graphicData>
+    <costList>
+      <Steel>150</Steel>
+      <Plasteel>20</Plasteel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+      <SubcoreRegular>1</SubcoreRegular>
+    </costList>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>300</MaxHitPoints>
+      <Flammability>0.4</Flammability>
+      <WorkToBuild>4000</WorkToBuild>
+      <Mass>35</Mass>
+      <Beauty>-10</Beauty>
+      <ShootingAccuracyTurret>0.97</ShootingAccuracyTurret>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>200</basePowerConsumption>
+      </li>
+    </comps>
+    <building>
+      <leavingsBlacklist>
+        <li>SubcoreRegular</li>
+      </leavingsBlacklist>
+    </building>
+    <researchPrerequisites>
+      <li>MW_AutomatedMounts</li>
+      <li>StandardMechtech</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <coreDef>SubcoreRegular</coreDef>
+        <rangeMultiplier>1.25</rangeMultiplier>
+        <warmupFactor>0.9</warmupFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_AutoMountBase">
+    <defName>MW_AutoMountHigh</defName>
+    <label>high auto-mount</label>
+    <description>A powered weapon mount run by a high subcore. It aims and fires the mounted weapon on its own at 130% of its normal range, with the accuracy of a level 14 shooter and 20% faster aiming. Its core can take target orders.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_AutoMountHigh</texPath>
+    </graphicData>
+    <costList>
+      <Steel>150</Steel>
+      <Plasteel>50</Plasteel>
+      <ComponentSpacer>2</ComponentSpacer>
+      <SubcoreHigh>1</SubcoreHigh>
+    </costList>
+    <constructionSkillPrerequisite>8</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>400</MaxHitPoints>
+      <Flammability>0.3</Flammability>
+      <WorkToBuild>6000</WorkToBuild>
+      <Mass>40</Mass>
+      <Beauty>-10</Beauty>
+      <ShootingAccuracyTurret>0.98</ShootingAccuracyTurret>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>250</basePowerConsumption>
+      </li>
+    </comps>
+    <building>
+      <leavingsBlacklist>
+        <li>SubcoreHigh</li>
+      </leavingsBlacklist>
+    </building>
+    <researchPrerequisites>
+      <li>MW_AutomatedMounts</li>
+      <li>HighMechtech</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <coreDef>SubcoreHigh</coreDef>
+        <rangeMultiplier>1.3</rangeMultiplier>
+        <warmupFactor>0.8</warmupFactor>
+        <allowForcedTarget>true</allowForcedTarget>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <ThingDef ParentName="MW_AutoMountBase">
+    <defName>MW_AutoMountPersona</defName>
+    <label>persona auto-mount</label>
+    <description>A powered weapon mount run by an AI persona core. It aims and fires the mounted weapon on its own at 135% of its normal range, with the accuracy of a level 18 shooter and 30% faster aiming. Its core can take target orders.\n\nDeconstructing it returns the persona core. If the mount is destroyed, there is a 50% chance the persona core is lost.</description>
+    <graphicData>
+      <texPath>Things/Building/Security/MW_AutoMountPersona</texPath>
+    </graphicData>
+    <costList>
+      <Plasteel>120</Plasteel>
+      <ComponentSpacer>4</ComponentSpacer>
+      <AIPersonaCore>1</AIPersonaCore>
+    </costList>
+    <constructionSkillPrerequisite>10</constructionSkillPrerequisite>
+    <statBases>
+      <MaxHitPoints>500</MaxHitPoints>
+      <Flammability>0.2</Flammability>
+      <WorkToBuild>9000</WorkToBuild>
+      <Mass>45</Mass>
+      <Beauty>-5</Beauty>
+      <ShootingAccuracyTurret>0.987</ShootingAccuracyTurret>
+    </statBases>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>300</basePowerConsumption>
+      </li>
+    </comps>
+    <building>
+      <leavingsBlacklist>
+        <li>AIPersonaCore</li>
+      </leavingsBlacklist>
+    </building>
+    <researchPrerequisites>
+      <li>MW_AutomatedMounts</li>
+      <li>HighMechtech</li>
+    </researchPrerequisites>
+    <modExtensions>
+      <li Class="MountedWeapons.MountExtension">
+        <coreDef>AIPersonaCore</coreDef>
+        <rangeMultiplier>1.35</rangeMultiplier>
+        <warmupFactor>0.7</warmupFactor>
+        <allowForcedTarget>true</allowForcedTarget>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+</Defs>

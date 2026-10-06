@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <JobDef>
+    <defName>MW_InstallMountedWeapon</defName>
+    <driverClass>MountedWeapons.JobDriver_InstallMountedWeapon</driverClass>
+    <reportString>installing TargetB on TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+  </JobDef>
+
+  <WorkGiverDef>
+    <defName>MW_InstallMountedWeapon</defName>
+    <label>install weapons on mounts</label>
+    <giverClass>MountedWeapons.WorkGiver_InstallMountedWeapon</giverClass>
+    <workType>Hauling</workType>
+    <verb>install</verb>
+    <gerund>installing</gerund>
+    <priorityInType>135</priorityInType>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
+  </WorkGiverDef>
+
+</Defs>

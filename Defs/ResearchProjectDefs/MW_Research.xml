@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <ResearchTabDef>
+    <defName>MW_MountedWeapons</defName>
+    <label>mounted weapons</label>
+  </ResearchTabDef>
+
+  <ResearchProjectDef>
+    <defName>MW_WeaponMounts</defName>
+    <label>weapon mounts</label>
+    <description>Build a braced rest that holds a handheld ranged weapon in place for a gunner, extending its range and steadying its aim.</description>
+    <tab>MW_MountedWeapons</tab>
+    <techLevel>Medieval</techLevel>
+    <baseCost>500</baseCost>
+    <prerequisites>
+      <li>Smithing</li>
+    </prerequisites>
+    <researchViewX>0.00</researchViewX>
+    <researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef>
+    <defName>MW_ReinforcedMounts</defName>
+    <label>reinforced mounts</label>
+    <description>Machined recoil cradles and sandbagged fronts: mounts that shoot farther, steadier and give their gunner better cover.</description>
+    <tab>MW_MountedWeapons</tab>
+    <techLevel>Industrial</techLevel>
+    <baseCost>1000</baseCost>
+    <prerequisites>
+      <li>MW_WeaponMounts</li>
+      <li>Machining</li>
+    </prerequisites>
+    <researchViewX>1.00</researchViewX>
+    <researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef>
+    <defName>MW_ArmoredEmplacements</defName>
+    <label>armored emplacements</label>
+    <description>Plasteel-shielded gun emplacements with stabilized cradles, giving the gunner heavy cover and the best manned accuracy.</description>
+    <tab>MW_MountedWeapons</tab>
+    <techLevel>Industrial</techLevel>
+    <baseCost>2000</baseCost>
+    <prerequisites>
+      <li>MW_ReinforcedMounts</li>
+      <li>MicroelectronicsBasics</li>
+    </prerequisites>
+    <researchViewX>2.00</researchViewX>
+    <researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

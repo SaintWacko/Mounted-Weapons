@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- Shared by every mount. The front of the mount faces the building's rotation. -->
+  <ThingDef Name="MW_WeaponMountBase" ParentName="BuildingBase" Abstract="True">
+    <thingClass>MountedWeapons.Building_WeaponMount</thingClass>
+    <drawerType>MapMeshAndRealTime</drawerType>
+    <drawHighlight>true</drawHighlight>
+    <drawHighlightOnlyForHostile>true</drawHighlightOnlyForHostile>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(1.3,1.3)</drawSize>
+      <damageData>
+        <rect>(0.2,0.2,0.6,0.6)</rect>
+      </damageData>
+    </graphicData>
+    <minifiedDef>MinifiedThing</minifiedDef>
+    <altitudeLayer>Building</altitudeLayer>
+    <rotatable>true</rotatable>
+    <stealable>false</stealable>
+    <passability>PassThroughOnly</passability>
+    <pathCost>50</pathCost>
+    <tickerType>Normal</tickerType>
+    <hasTooltip>true</hasTooltip>
+    <thingCategories>
+      <li>BuildingsSecurity</li>
+    </thingCategories>
+    <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+    <designationCategory>Security</designationCategory>
+    <building>
+      <turretGunDef>MW_EmptyMountGun</turretGunDef>
+      <!-- The mount runs the weapon's own warmup and cooldown in code. -->
+      <turretBurstWarmupTime>0</turretBurstWarmupTime>
+      <turretBurstCooldownTime>-1</turretBurstCooldownTime>
+      <ai_combatDangerous>true</ai_combatDangerous>
+    </building>
+  </ThingDef>
+
+  <!-- Manned: the gunner stands one cell behind the mount, so the mount itself is
+       their cover from the front. Their shooting accuracy, aim speed and traits
+       apply, and they gain Shooting XP. -->
+  <ThingDef Name="MW_MannedMountBase" ParentName="MW_WeaponMountBase" Abstract="True">
+    <hasInteractionCell>true</hasInteractionCell>
+    <interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    <comps>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Mannable">
+        <manWorkType>Violent</manWorkType>
+      </li>
+    </comps>
+    <placeWorkers>
+      <li>PlaceWorker_PreventInteractionSpotOverlap</li>
+    </placeWorkers>
+  </ThingDef>
+
+</Defs>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- Held by a mount with no weapon on it. Building_TurretGun assumes a gun always
+       exists; this one's verb is never available, so the mount never targets anything.
+       BaseWeaponTurret makes it untradeable, destroy-on-drop and unbuildable. -->
+  <ThingDef ParentName="BaseWeaponTurret">
+    <defName>MW_EmptyMountGun</defName>
+    <label>empty weapon mount</label>
+    <description>Placeholder for a weapon mount that holds no weapon.</description>
+    <graphicData>
+      <texPath>Things/Item/Equipment/WeaponRanged/Revolver</texPath>
+    </graphicData>
+    <statBases>
+      <Mass>1</Mass>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>MountedWeapons.Verb_MountEmpty</verbClass>
+        <hasStandardCommand>false</hasStandardCommand>
+        <isPrimary>true</isPrimary>
+        <range>0</range>
+      </li>
+    </verbs>
+  </ThingDef>
+
+</Defs>

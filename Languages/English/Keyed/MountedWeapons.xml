@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <MW_CommandChooseWeapon>Choose weapon</MW_CommandChooseWeapon>
+  <MW_CommandChooseWeaponDesc>Pick a weapon on this map for a hauler to bring here and mount. A weapon already on the mount is dropped beside it when the new one is installed.</MW_CommandChooseWeaponDesc>
+  <MW_CommandCancelWeapon>Cancel install</MW_CommandCancelWeapon>
+  <MW_CommandCancelWeaponDesc>Stop waiting for the chosen weapon to be brought here.</MW_CommandCancelWeaponDesc>
+  <MW_CommandRemoveWeapon>Remove weapon</MW_CommandRemoveWeapon>
+  <MW_CommandRemoveWeaponDesc>Take the weapon off the mount and drop it beside it.</MW_CommandRemoveWeaponDesc>
+  <MW_NoMountableWeapons>No mountable weapons on this map</MW_NoMountableWeapons>
+
+  <MW_InspectMounted>Mounted: {0}</MW_InspectMounted>
+  <MW_InspectRange>Range: {0} ({1} of normal)</MW_InspectRange>
+  <MW_InspectEmpty>No weapon mounted</MW_InspectEmpty>
+  <MW_InspectPending>Waiting for a hauler to install: {0}</MW_InspectPending>
+
+  <MW_ReasonNotMountable>This weapon can't be mounted.</MW_ReasonNotMountable>
+  <MW_ReasonBiocoded>Biocoded weapons can't be mounted.</MW_ReasonBiocoded>
+
+  <MW_CoreLost>The {0} inside the {1} was destroyed with it.</MW_CoreLost>
+  <MW_CoreSurvived>The {0} survived the destruction of the {1}.</MW_CoreSurvived>
+
+</LanguageData>

@@ -1,4 +1,4 @@
 {
-  "textures": ["UI/Commands/MW_ChooseWeapon", "UI/Commands/MW_RemoveWeapon", "UI/Designators/Cancel"],
+  "textures": ["UI/Commands/MW_ChooseWeapon", "UI/Commands/MW_RemoveWeapon"],
   "audio": []
 }

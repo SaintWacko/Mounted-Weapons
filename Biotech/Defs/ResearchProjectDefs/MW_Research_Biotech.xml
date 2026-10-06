@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <ResearchProjectDef>
+    <defName>MW_AutomatedMounts</defName>
+    <label>automated mounts</label>
+    <description>Wire a mech subcore into a powered weapon mount so it aims and fires on its own. Better cores (standard and high subcores, and AI persona cores) unlock better auto-mounts as your mechtech research advances.</description>
+    <tab>MW_MountedWeapons</tab>
+    <techLevel>Industrial</techLevel>
+    <baseCost>1200</baseCost>
+    <prerequisites>
+      <li>MW_ReinforcedMounts</li>
+      <li>BasicMechtech</li>
+    </prerequisites>
+    <researchViewX>2.00</researchViewX>
+    <researchViewY>1.00</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

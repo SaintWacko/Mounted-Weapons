@@ -13,10 +13,12 @@ namespace MountedWeapons
 
         private Thing Weapon => job.GetTarget(TargetIndex.B).Thing;
 
+        // Only the weapon is reserved. The gunner manning the mount holds a reservation on
+        // it, and the weapon can be swapped while they man it; reserving the weapon is
+        // enough to stop two haulers fetching it.
         public override bool TryMakePreToilReservations(bool errorOnFailed)
         {
-            return pawn.Reserve(job.targetA, job, 1, -1, null, errorOnFailed)
-                && pawn.Reserve(job.targetB, job, 1, -1, null, errorOnFailed);
+            return pawn.Reserve(job.targetB, job, 1, -1, null, errorOnFailed);
         }
 
         protected override IEnumerable<Toil> MakeNewToils()

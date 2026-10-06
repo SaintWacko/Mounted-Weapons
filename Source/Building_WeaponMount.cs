@@ -205,8 +205,24 @@ namespace MountedWeapons
         private void Fire()
         {
             fireReadyTick = -1;
-            GiveGunnerShootingXp();
-            base.BeginBurst();
+            // Same body as Building_TurretGun.BeginBurst, with XP only for a burst that
+            // actually started (vanilla trains in WarmupComplete, after CanHitTarget).
+            if (AttackVerb.TryStartCastOn(CurrentTarget))
+            {
+                GiveGunnerShootingXp();
+            }
+            OnAttackedTarget(CurrentTarget);
+        }
+
+        public override void OrderAttack(LocalTargetInfo targ)
+        {
+            // A new order restarts aiming; a warmup that was about to finish must not
+            // carry over to the new target.
+            if (targ != forcedTarget)
+            {
+                fireReadyTick = -1;
+            }
+            base.OrderAttack(targ);
         }
 
         private int WarmupTicks()
@@ -250,7 +266,7 @@ namespace MountedWeapons
             Map map = Map;
             IntVec3 pos = Position;
             bool wasSpawned = Spawned;
-            string label = LabelCap;
+            string label = Label;
 
             Thing weapon = null;
             if (wasSpawned && mode != DestroyMode.Vanish)
@@ -326,6 +342,10 @@ namespace MountedWeapons
             if (pendingWeapon != null)
             {
                 sb.AppendLine("MW_InspectPending".Translate(pendingWeapon.LabelCap));
+            }
+            if (HasWeapon && mannableComp != null && Gunner == null)
+            {
+                sb.AppendLine("MW_InspectUnmanned".Translate());
             }
             return sb.ToString().TrimEndNewlines();
         }

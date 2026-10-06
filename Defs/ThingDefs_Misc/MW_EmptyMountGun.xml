@@ -6,8 +6,8 @@
        BaseWeaponTurret makes it untradeable, destroy-on-drop and unbuildable. -->
   <ThingDef ParentName="BaseWeaponTurret">
     <defName>MW_EmptyMountGun</defName>
-    <label>empty weapon mount</label>
-    <description>Placeholder for a weapon mount that holds no weapon.</description>
+    <label>installed weapon (choose one)</label>
+    <description>A weapon mount fires whatever ranged weapon is installed on it. Select the mount and choose a weapon.</description>
     <graphicData>
       <texPath>Things/Item/Equipment/WeaponRanged/Revolver</texPath>
     </graphicData>

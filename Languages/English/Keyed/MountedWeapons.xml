@@ -13,6 +13,7 @@
   <MW_InspectRange>Range: {0} ({1} of normal)</MW_InspectRange>
   <MW_InspectEmpty>No weapon mounted</MW_InspectEmpty>
   <MW_InspectPending>Waiting for a hauler to install: {0}</MW_InspectPending>
+  <MW_InspectUnmanned>Needs a colonist to man it</MW_InspectUnmanned>
 
   <MW_ReasonNotMountable>This weapon can't be mounted.</MW_ReasonNotMountable>
   <MW_ReasonBiocoded>Biocoded weapons can't be mounted.</MW_ReasonBiocoded>

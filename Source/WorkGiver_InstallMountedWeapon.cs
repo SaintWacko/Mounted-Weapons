@@ -29,7 +29,6 @@ namespace MountedWeapons
             Thing weapon = mount.pendingWeapon;
             if (!weapon.Spawned || !mount.PendingWeaponStillValid()) return false;
             if (mount.IsForbidden(pawn) || mount.IsBurning()) return false;
-            if (!pawn.CanReserve(mount, 1, -1, null, forced)) return false;
             if (weapon.IsForbidden(pawn)) return false;
             if (!pawn.CanReserveAndReach(weapon, PathEndMode.ClosestTouch, Danger.Deadly, 1, -1, null, forced)) return false;
             return MountUtility.CanMount(weapon, out _);

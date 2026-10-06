@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using HarmonyLib;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace MountedWeapons
@@ -29,6 +31,51 @@ namespace MountedWeapons
             perCell = 1f - (1f - perCell) * (1f - mount.Ext.stability);
             // Recurses with a pawn caster, which this postfix ignores.
             __result = ShotReport.HitFactorFromShooter(gunner, distance, perCell);
+        }
+    }
+
+    /// <summary>
+    /// When a turret is manned, Verb_LaunchProjectile.TryCastShot passes the BUILDING as
+    /// the projectile's equipment (so a mortar kill reads "killed by mortar"). For a mount
+    /// that drops the mounted weapon's quality damage multiplier and its unique-weapon
+    /// traits, because Projectile reads both from the equipment. This hands the projectile
+    /// the real weapon instead.
+    ///
+    /// Unique-weapon traits are applied in TryCastShot before Launch is called, against the
+    /// building, so they are re-applied here, only on the swap path; an automated mount is
+    /// never manned, already passes the weapon, and never reaches this branch.
+    /// </summary>
+    [HarmonyPatch(typeof(Projectile), nameof(Projectile.Launch), new[]
+    {
+        typeof(Thing), typeof(Vector3), typeof(LocalTargetInfo), typeof(LocalTargetInfo),
+        typeof(ProjectileHitFlags), typeof(bool), typeof(Thing), typeof(ThingDef)
+    })]
+    public static class Patch_Projectile_Launch
+    {
+        public static void Prefix(Projectile __instance, ref Thing equipment)
+        {
+            if (!(equipment is Building_WeaponMount mount)) return;
+            Thing weapon = mount.MountedWeapon;
+            if (weapon == null) return;
+            equipment = weapon;
+
+            CompUniqueWeapon unique = weapon.TryGetComp<CompUniqueWeapon>();
+            if (unique == null) return;
+            foreach (WeaponTraitDef trait in unique.TraitsListForReading)
+            {
+                if (trait.damageDefOverride != null)
+                {
+                    __instance.damageDefOverride = trait.damageDefOverride;
+                }
+                if (!trait.extraDamages.NullOrEmpty())
+                {
+                    if (__instance.extraDamages == null)
+                    {
+                        __instance.extraDamages = new List<ExtraDamage>();
+                    }
+                    __instance.extraDamages.AddRange(trait.extraDamages);
+                }
+            }
         }
     }
 }

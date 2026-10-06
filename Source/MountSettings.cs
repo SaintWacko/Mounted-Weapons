@@ -61,7 +61,7 @@ namespace MountedWeapons
         public static IEnumerable<ThingDef> MountDefs => DefDatabase<ThingDef>.AllDefsListForReading
             .Where(d => d.HasModExtension<MountExtension>() && typeof(Building_WeaponMount).IsAssignableFrom(d.thingClass));
 
-        public static bool IsManned(ThingDef def) => def.HasComp(typeof(CompMannable));
+        public static bool IsManned(ThingDef def) => def.HasComp<CompMannable>();
 
         public float ArcFor(ThingDef def) => IsManned(def) ? mannedArc : automatedArc;
 

@@ -43,6 +43,10 @@
        their cover from the front. Their shooting accuracy, aim speed and traits
        apply, and they gain Shooting XP. -->
   <ThingDef Name="MW_MannedMountBase" ParentName="MW_WeaponMountBase" Abstract="True">
+    <building>
+      <!-- The acquire-target beep is the sound of an automated turret; a gunner doesn't make it. -->
+      <playTargetAcquiredSound>false</playTargetAcquiredSound>
+    </building>
     <hasInteractionCell>true</hasInteractionCell>
     <interactionCellOffset>(0,0,-1)</interactionCellOffset>
     <comps>

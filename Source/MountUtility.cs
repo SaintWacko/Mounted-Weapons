@@ -30,7 +30,9 @@ namespace MountedWeapons
         private static bool ComputeMountable(ThingDef def)
         {
             if (!def.IsRangedWeapon || def.equipmentType != EquipmentType.Primary) return false;
-            if (!def.HasComp(typeof(CompEquippable))) return false;
+            // The generic overload accepts subclasses; HasComp(Type) matches the exact class
+            // only, and refused the hellcat rifle (CompEquippableAbilityReloadable).
+            if (!def.HasComp<CompEquippable>()) return false;
             if (def.destroyOnDrop) return false; // turret guns, mech-only built-ins
             if (def.weaponTags != null && def.weaponTags.Contains("TurretGun")) return false;
 

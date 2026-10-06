@@ -1,0 +1,420 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using RimWorld;
+using UnityEngine;
+using Verse;
+
+namespace MountedWeapons
+{
+    /// <summary>
+    /// A turret whose gun is a real weapon item the player installed.
+    ///
+    /// Building_TurretGun keeps its gun in the public <c>gun</c> field and saves it with
+    /// Scribe_Deep, so the installed weapon is simply assigned there: quality, art,
+    /// hit points and every comp ride along and come back out unchanged. An empty mount
+    /// holds a placeholder gun (MW_EmptyMountGun) whose verb is never available,
+    /// because the base class assumes the gun is never null.
+    /// </summary>
+    [StaticConstructorOnStartup]
+    public class Building_WeaponMount : Building_TurretGun
+    {
+        /// <summary>The weapon the player picked, waiting for a colonist to bring it.</summary>
+        public Thing pendingWeapon;
+
+        /// <summary>
+        /// Tick at which a warmup this mount started is due to finish. Vanilla turrets use
+        /// one warmup per building def; a mount uses the weapon's own aim time scaled by
+        /// its gunner, so BeginBurst runs the warmup itself (see BeginBurst).
+        /// </summary>
+        private int fireReadyTick = -1;
+
+        // The range-scaled VerbProperties clones currently on the mounted weapon's
+        // verbs. Not saved: verbs are rebuilt from the def on load and the clones
+        // are reapplied.
+        private readonly List<VerbProperties> appliedProps = new List<VerbProperties>();
+
+        private MountExtension extInt;
+
+        public MountExtension Ext
+        {
+            get
+            {
+                if (extInt == null)
+                {
+                    extInt = def.GetModExtension<MountExtension>() ?? new MountExtension();
+                }
+                return extInt;
+            }
+        }
+
+        public bool HasWeapon => gun != null && gun.def != def.building.turretGunDef;
+
+        public Thing MountedWeapon => HasWeapon ? gun : null;
+
+        public Pawn Gunner => mannableComp?.ManningPawn;
+
+        // The base draws the turret top from the turret gun def's texture. The mount
+        // draws the real weapon instead (DrawAt), so the top is drawn clear.
+        public override Material TurretTopMaterial => BaseContent.ClearMat;
+
+        protected override bool CanSetForcedTarget =>
+            HasWeapon && (base.CanSetForcedTarget || (Ext.allowForcedTarget && Faction == Faction.OfPlayer));
+
+        protected override bool HideForceTargetGizmo => !HasWeapon;
+
+        private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
+
+        public override void SpawnSetup(Map map, bool respawningAfterLoad)
+        {
+            base.SpawnSetup(map, respawningAfterLoad);
+            PrepareMountedWeapon();
+        }
+
+        public override void ExposeData()
+        {
+            base.ExposeData();
+            Scribe_References.Look(ref pendingWeapon, "pendingWeapon");
+            Scribe_Values.Look(ref fireReadyTick, "fireReadyTick", -1);
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                // The base already rebound caster and callback; this adds the range clones.
+                PrepareMountedWeapon();
+            }
+        }
+
+        protected override void Tick()
+        {
+            base.Tick();
+            if (pendingWeapon != null && this.IsHashIntervalTick(250) && !PendingWeaponStillValid())
+            {
+                pendingWeapon = null;
+            }
+        }
+
+        public bool PendingWeaponStillValid()
+        {
+            if (pendingWeapon == null || pendingWeapon.Destroyed) return false;
+            // Spawned on this map, or being carried here by the installer.
+            if (pendingWeapon.Spawned) return pendingWeapon.Map == Map;
+            return pendingWeapon.ParentHolder is Pawn_CarryTracker carrier && carrier.pawn.Map == Map;
+        }
+
+        // ---------------------------------------------------------------- weapon swap
+
+        /// <summary>
+        /// Puts a weapon on the mount. The caller must already have taken it out of
+        /// whatever held it (a pawn's carry tracker, usually). A weapon already on the
+        /// mount is dropped beside it.
+        /// </summary>
+        public void InstallWeapon(Thing weapon)
+        {
+            if (HasWeapon && Spawned)
+            {
+                Thing old = RemoveWeapon();
+                GenPlace.TryPlaceThing(old, DropCell, Map, ThingPlaceMode.Near);
+            }
+            gun = weapon;
+            appliedProps.Clear();
+            PrepareMountedWeapon();
+            ResetTargeting();
+            burstCooldownTicksLeft = 0;
+            if (pendingWeapon == weapon)
+            {
+                pendingWeapon = null;
+            }
+        }
+
+        /// <summary>
+        /// Takes the weapon off the mount and returns it unspawned, with fresh verbs so
+        /// a pawn can equip it normally. Returns null when the mount is empty.
+        /// </summary>
+        public Thing RemoveWeapon()
+        {
+            if (!HasWeapon) return null;
+            Thing weapon = gun;
+            CompEquippable eq = weapon.TryGetComp<CompEquippable>();
+            if (eq != null)
+            {
+                // A new tracker drops the caster, the burst callback and the range
+                // clones in one go; verbs are rebuilt lazily from the def.
+                eq.verbTracker = new VerbTracker(eq);
+            }
+            MakeGun();
+            appliedProps.Clear();
+            ResetTargeting();
+            return weapon;
+        }
+
+        private void PrepareMountedWeapon()
+        {
+            if (!HasWeapon) return;
+            CompEquippable eq = gun.TryGetComp<CompEquippable>();
+            if (eq == null) return;
+            List<Verb> verbs = eq.AllVerbs;
+            for (int i = 0; i < verbs.Count; i++)
+            {
+                Verb verb = verbs[i];
+                verb.caster = this;
+                verb.castCompleteCallback = BurstComplete;
+                if (!appliedProps.Contains(verb.verbProps))
+                {
+                    // Clone so the range bonus applies to this weapon only, never to the def.
+                    VerbProperties clone = verb.verbProps.MemberwiseClone();
+                    clone.range = verb.verbProps.range * Ext.rangeMultiplier;
+                    verb.verbProps = clone;
+                    appliedProps.Add(clone);
+                }
+            }
+        }
+
+        private void ResetTargeting()
+        {
+            forcedTarget = LocalTargetInfo.Invalid;
+            currentTargetInt = LocalTargetInfo.Invalid;
+            burstWarmupTicksLeft = 0;
+            fireReadyTick = -1;
+        }
+
+        // ---------------------------------------------------------------- firing
+
+        protected override void BeginBurst()
+        {
+            // Both entry points land here: TryStartShootSomething (target just acquired;
+            // the defs set turretBurstWarmupTime to 0) and the base Tick when
+            // burstWarmupTicksLeft reaches zero. The first call starts the weapon's own
+            // warmup; the call that arrives when that warmup ends fires. The two-tick
+            // window stops a stale fireReadyTick (warmup cancelled when the gunner
+            // left) from firing instantly later.
+            int now = Find.TickManager.TicksGame;
+            if (fireReadyTick >= 0 && now >= fireReadyTick && now <= fireReadyTick + 2)
+            {
+                Fire();
+                return;
+            }
+            int warmup = WarmupTicks();
+            if (warmup <= 0)
+            {
+                Fire();
+                return;
+            }
+            burstWarmupTicksLeft = warmup;
+            fireReadyTick = now + warmup;
+        }
+
+        private void Fire()
+        {
+            fireReadyTick = -1;
+            GiveGunnerShootingXp();
+            base.BeginBurst();
+        }
+
+        private int WarmupTicks()
+        {
+            float seconds = AttackVerb.verbProps.warmupTime * Ext.warmupFactor;
+            Pawn gunner = Gunner;
+            if (gunner != null)
+            {
+                // Carries Careful shooter / Trigger-happy and anything else on the stat.
+                seconds *= gunner.GetStatValue(StatDefOf.AimingDelayFactor);
+            }
+            return seconds.SecondsToTicks();
+        }
+
+        protected override float BurstCooldownTime()
+        {
+            if (!HasWeapon) return 1f;
+            // The stat includes weapon quality, as it does when a pawn holds the weapon.
+            return gun.GetStatValue(StatDefOf.RangedWeapon_Cooldown) * Ext.cooldownFactor;
+        }
+
+        /// <summary>
+        /// Verb_Shoot only trains pawn casters; the mount is the caster, so the gunner is
+        /// trained here with vanilla's numbers (170 per cycle-second against enemies,
+        /// 20 otherwise, no XP for shooting downed pawns).
+        /// </summary>
+        private void GiveGunnerShootingXp()
+        {
+            Pawn gunner = Gunner;
+            if (gunner?.skills == null) return;
+            if (!(CurrentTarget.Thing is Pawn target) || target.Downed || target.IsColonyMech) return;
+            float xp = target.HostileTo(gunner) ? 170f : 20f;
+            xp *= AttackVerb.verbProps.AdjustedFullCycleTime(AttackVerb, gunner);
+            gunner.skills.Learn(SkillDefOf.Shooting, xp);
+        }
+
+        // ---------------------------------------------------------------- destruction
+
+        public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+        {
+            Map map = Map;
+            IntVec3 pos = Position;
+            bool wasSpawned = Spawned;
+            string label = LabelCap;
+
+            Thing weapon = null;
+            if (wasSpawned && mode != DestroyMode.Vanish)
+            {
+                weapon = RemoveWeapon();
+            }
+
+            base.Destroy(mode);
+
+            if (!wasSpawned || map == null) return;
+
+            bool killed = mode == DestroyMode.KillFinalize || mode == DestroyMode.KillFinalizeLeavingsOnly;
+            if (weapon != null)
+            {
+                if (killed && weapon.def.useHitPoints)
+                {
+                    int damage = Mathf.RoundToInt(weapon.MaxHitPoints * Rand.Range(0f, Ext.maxWeaponDamageWhenKilled));
+                    weapon.HitPoints = Mathf.Max(1, weapon.HitPoints - damage);
+                }
+                GenPlace.TryPlaceThing(weapon, pos, map, ThingPlaceMode.Near);
+            }
+
+            if (Ext.coreDef != null && mode != DestroyMode.Vanish)
+            {
+                // The core is on the building's leavingsBlacklist, so vanilla never
+                // refunds it. Deconstructing always returns it; destruction in combat
+                // loses it on a roll.
+                bool dropCore = true;
+                if (killed)
+                {
+                    dropCore = !Rand.Chance(Ext.coreLossChanceWhenKilled);
+                    string key = dropCore ? "MW_CoreSurvived" : "MW_CoreLost";
+                    Messages.Message(key.Translate(Ext.coreDef.label, label), new TargetInfo(pos, map),
+                        dropCore ? MessageTypeDefOf.NeutralEvent : MessageTypeDefOf.NegativeEvent);
+                }
+                if (dropCore)
+                {
+                    GenPlace.TryPlaceThing(ThingMaker.MakeThing(Ext.coreDef), pos, map, ThingPlaceMode.Near);
+                }
+            }
+        }
+
+        // ---------------------------------------------------------------- drawing
+
+        protected override void DrawAt(Vector3 drawLoc, bool flip = false)
+        {
+            base.DrawAt(drawLoc, flip);
+            if (!HasWeapon) return;
+            Vector3 offset = new Vector3(Ext.weaponDrawOffset.x, 0f, Ext.weaponDrawOffset.y).RotatedBy(Rotation.AsAngle);
+            Vector3 loc = drawLoc + offset + Altitudes.AltIncVect * 2f;
+            PawnRenderUtility.DrawEquipmentAiming(gun, loc, Top.CurRotation);
+        }
+
+        // ---------------------------------------------------------------- UI
+
+        public override string GetInspectString()
+        {
+            StringBuilder sb = new StringBuilder();
+            string baseString = base.GetInspectString();
+            if (!baseString.NullOrEmpty())
+            {
+                sb.AppendLine(baseString);
+            }
+            if (HasWeapon)
+            {
+                sb.AppendLine("MW_InspectMounted".Translate(gun.LabelCap));
+                sb.AppendLine("MW_InspectRange".Translate(AttackVerb.verbProps.range.ToString("F1"), Ext.rangeMultiplier.ToStringPercent()));
+            }
+            else
+            {
+                sb.AppendLine("MW_InspectEmpty".Translate());
+            }
+            if (pendingWeapon != null)
+            {
+                sb.AppendLine("MW_InspectPending".Translate(pendingWeapon.LabelCap));
+            }
+            return sb.ToString().TrimEndNewlines();
+        }
+
+        public override IEnumerable<Gizmo> GetGizmos()
+        {
+            foreach (Gizmo gizmo in base.GetGizmos())
+            {
+                yield return gizmo;
+            }
+            if (Faction != Faction.OfPlayer) yield break;
+
+            yield return new Command_Action
+            {
+                defaultLabel = "MW_CommandChooseWeapon".Translate(),
+                defaultDesc = "MW_CommandChooseWeaponDesc".Translate(),
+                icon = MWTex.ChooseWeapon,
+                action = () => Find.WindowStack.Add(new FloatMenu(WeaponChoices()))
+            };
+
+            if (pendingWeapon != null)
+            {
+                yield return new Command_Action
+                {
+                    defaultLabel = "MW_CommandCancelWeapon".Translate(),
+                    defaultDesc = "MW_CommandCancelWeaponDesc".Translate(),
+                    icon = MWTex.Cancel,
+                    action = () =>
+                    {
+                        foreach (Building_WeaponMount mount in SelectedMounts())
+                        {
+                            mount.pendingWeapon = null;
+                        }
+                    }
+                };
+            }
+
+            if (HasWeapon)
+            {
+                yield return new Command_Action
+                {
+                    defaultLabel = "MW_CommandRemoveWeapon".Translate(),
+                    defaultDesc = "MW_CommandRemoveWeaponDesc".Translate(),
+                    icon = MWTex.RemoveWeapon,
+                    action = () =>
+                    {
+                        // Gizmos with the same label merge across a multi-selection,
+                        // so this acts on every selected mount.
+                        foreach (Building_WeaponMount mount in SelectedMounts())
+                        {
+                            Thing weapon = mount.RemoveWeapon();
+                            if (weapon != null)
+                            {
+                                GenPlace.TryPlaceThing(weapon, mount.DropCell, mount.Map, ThingPlaceMode.Near);
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        private IEnumerable<Building_WeaponMount> SelectedMounts()
+        {
+            List<Building_WeaponMount> result = Find.Selector.SelectedObjects.OfType<Building_WeaponMount>().ToList();
+            if (!result.Contains(this))
+            {
+                result.Add(this);
+            }
+            return result;
+        }
+
+        private List<FloatMenuOption> WeaponChoices()
+        {
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            IEnumerable<Thing> candidates = Map.listerThings.ThingsInGroup(ThingRequestGroup.Weapon)
+                .Where(t => t.Spawned && !t.IsForbidden(Faction.OfPlayer) && MountUtility.CanMount(t, out _))
+                .OrderBy(t => t.def.label)
+                .ThenByDescending(t => t.TryGetQuality(out QualityCategory q) ? (int)q : -1);
+            foreach (Thing weapon in candidates)
+            {
+                Thing local = weapon;
+                options.Add(new FloatMenuOption(local.LabelCap, () => pendingWeapon = local, local, Color.white,
+                    mouseoverGuiAction: _ => TargetHighlighter.Highlight(local)));
+            }
+            if (options.Count == 0)
+            {
+                options.Add(new FloatMenuOption("MW_NoMountableWeapons".Translate(), null));
+            }
+            return options;
+        }
+    }
+}

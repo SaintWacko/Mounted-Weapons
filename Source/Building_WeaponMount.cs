@@ -217,12 +217,14 @@ namespace MountedWeapons
         public override void OrderAttack(LocalTargetInfo targ)
         {
             // A new order restarts aiming; a warmup that was about to finish must not
-            // carry over to the new target.
-            if (targ != forcedTarget)
+            // carry over to the new target. Compared after the base runs, because the
+            // base turns down out-of-range orders without changing the target.
+            LocalTargetInfo before = forcedTarget;
+            base.OrderAttack(targ);
+            if (forcedTarget != before)
             {
                 fireReadyTick = -1;
             }
-            base.OrderAttack(targ);
         }
 
         private int WarmupTicks()

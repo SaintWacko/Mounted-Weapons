@@ -33,6 +33,8 @@ namespace MountedWeapons
         // verbs. Not saved: verbs are rebuilt from the def on load and the clones
         // are reapplied.
         private readonly List<VerbProperties> appliedProps = new List<VerbProperties>();
+        // The weapon def's own range for each clone, so a settings change can rescale them.
+        private readonly List<float> baseRanges = new List<float>();
 
         private MountExtension extInt;
 
@@ -65,6 +67,68 @@ namespace MountedWeapons
 
         private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
+        // ---------------------------------------------------------------- firing arc
+
+        public float Arc => MountSettings.Get.ArcFor(def);
+
+        public bool InArc(LocalTargetInfo targ)
+        {
+            if (!targ.IsValid) return true;
+            Vector3 point = targ.HasThing ? targ.Thing.DrawPos : targ.Cell.ToVector3Shifted();
+            return FiringArc.Contains(DrawPos, Rotation, Arc, point);
+        }
+
+        public override LocalTargetInfo TryFindNewTarget()
+        {
+            if (FiringArc.Unlimited(Arc) || !HasWeapon) return base.TryFindNewTarget();
+            // Same search as the base, with the arc added to its validator. The base's
+            // validator is private, so its rules are repeated in IsValidMountTarget.
+            IAttackTargetSearcher searcher = Gunner != null ? (IAttackTargetSearcher)Gunner : this;
+            TargetScanFlags flags = TargetScanFlags.NeedThreat | TargetScanFlags.NeedAutoTargetable;
+            if (!AttackVerb.ProjectileFliesOverhead())
+            {
+                flags |= TargetScanFlags.NeedLOSToAll | TargetScanFlags.LOSBlockableByGas;
+            }
+            if (AttackVerb.IsIncendiary_Ranged())
+            {
+                flags |= TargetScanFlags.NeedNonBurning;
+            }
+            return (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(searcher, flags,
+                t => InArc(t) && IsValidMountTarget(t));
+        }
+
+        private bool IsValidMountTarget(Thing t)
+        {
+            if (!(t is Pawn pawn)) return true;
+            if (Faction == Faction.OfPlayer && pawn.IsPrisoner) return false;
+            if (AttackVerb.ProjectileFliesOverhead())
+            {
+                RoofDef roof = Map.roofGrid.RoofAt(t.Position);
+                if (roof != null && roof.isThickRoof) return false;
+            }
+            if (mannableComp == null) return !GenAI.MachinesLike(Faction, pawn);
+            return !(pawn.RaceProps.Animal && pawn.Faction == Faction.OfPlayer);
+        }
+
+        public override void DrawExtraSelectionOverlays()
+        {
+            base.DrawExtraSelectionOverlays();
+            float radius = HasWeapon ? AttackVerb.EffectiveRange : 12f;
+            FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
+        }
+
+        public void Notify_SettingsChanged()
+        {
+            for (int i = 0; i < appliedProps.Count; i++)
+            {
+                appliedProps[i].range = baseRanges[i] * Ext.rangeMultiplier;
+            }
+            if (forcedTarget.IsValid && !InArc(forcedTarget))
+            {
+                ResetTargeting();
+            }
+        }
+
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
@@ -85,7 +149,17 @@ namespace MountedWeapons
 
         protected override void Tick()
         {
+            if (forcedTarget.IsValid && !InArc(forcedTarget))
+            {
+                // A forced target walked out of the arc.
+                forcedTarget = LocalTargetInfo.Invalid;
+            }
             base.Tick();
+            if (Spawned && !FiringArc.Unlimited(Arc))
+            {
+                // Keeps idle sweeps, and the turn toward any target, inside the arc.
+                Top.CurRotation = FiringArc.Clamp(Rotation, Arc, Top.CurRotation);
+            }
             if (pendingWeapon != null && this.IsHashIntervalTick(250) && !PendingWeaponStillValid())
             {
                 pendingWeapon = null;
@@ -116,6 +190,7 @@ namespace MountedWeapons
             }
             gun = weapon;
             appliedProps.Clear();
+            baseRanges.Clear();
             PrepareMountedWeapon();
             ResetTargeting();
             burstCooldownTicksLeft = 0;
@@ -142,6 +217,7 @@ namespace MountedWeapons
             }
             MakeGun();
             appliedProps.Clear();
+            baseRanges.Clear();
             ResetTargeting();
             return weapon;
         }
@@ -162,6 +238,7 @@ namespace MountedWeapons
                     // Clone so the range bonus applies to this weapon only, never to the def.
                     VerbProperties clone = verb.verbProps.MemberwiseClone();
                     clone.range = verb.verbProps.range * Ext.rangeMultiplier;
+                    baseRanges.Add(verb.verbProps.range);
                     verb.verbProps = clone;
                     appliedProps.Add(clone);
                 }
@@ -205,6 +282,12 @@ namespace MountedWeapons
         private void Fire()
         {
             fireReadyTick = -1;
+            if (!InArc(CurrentTarget))
+            {
+                // The target left the arc during the warmup.
+                ResetTargeting();
+                return;
+            }
             // Same body as Building_TurretGun.BeginBurst, with XP only for a burst that
             // actually started (vanilla trains in WarmupComplete, after CanHitTarget).
             if (AttackVerb.TryStartCastOn(CurrentTarget))
@@ -219,6 +302,11 @@ namespace MountedWeapons
             // A new order restarts aiming; a warmup that was about to finish must not
             // carry over to the new target. Compared after the base runs, because the
             // base turns down out-of-range orders without changing the target.
+            if (targ.IsValid && !InArc(targ))
+            {
+                Messages.Message("MW_TargetOutsideArc".Translate(), this, MessageTypeDefOf.RejectInput, historical: false);
+                return;
+            }
             LocalTargetInfo before = forcedTarget;
             base.OrderAttack(targ);
             if (forcedTarget != before)
@@ -285,7 +373,7 @@ namespace MountedWeapons
             {
                 if (killed && weapon.def.useHitPoints)
                 {
-                    int damage = Mathf.RoundToInt(weapon.MaxHitPoints * Rand.Range(0f, Ext.maxWeaponDamageWhenKilled));
+                    int damage = Mathf.RoundToInt(weapon.MaxHitPoints * Rand.Range(0f, MountSettings.Get.maxWeaponDamage));
                     weapon.HitPoints = Mathf.Max(1, weapon.HitPoints - damage);
                 }
                 GenPlace.TryPlaceThing(weapon, pos, map, ThingPlaceMode.Near);
@@ -299,7 +387,7 @@ namespace MountedWeapons
                 bool dropCore = true;
                 if (killed)
                 {
-                    dropCore = !Rand.Chance(Ext.coreLossChanceWhenKilled);
+                    dropCore = !Rand.Chance(MountSettings.Get.coreLossChance);
                     string key = dropCore ? "MW_CoreSurvived" : "MW_CoreLost";
                     Messages.Message(key.Translate(Ext.coreDef.label, label), new TargetInfo(pos, map),
                         dropCore ? MessageTypeDefOf.NeutralEvent : MessageTypeDefOf.NegativeEvent);
@@ -318,8 +406,43 @@ namespace MountedWeapons
             base.DrawAt(drawLoc, flip);
             if (!HasWeapon) return;
             Vector3 offset = new Vector3(Ext.weaponDrawOffset.x, 0f, Ext.weaponDrawOffset.y).RotatedBy(Rotation.AsAngle);
-            Vector3 loc = drawLoc + offset + Altitudes.AltIncVect * 2f;
-            PawnRenderUtility.DrawEquipmentAiming(gun, loc, Top.CurRotation);
+            Vector3 pivot = drawLoc + offset + Altitudes.AltIncVect * 2f;
+            float aim = Top.CurRotation;
+            if (MountSettings.Get.centerWeapons)
+            {
+                pivot -= ArtCentroidWorld(aim);
+            }
+            PawnRenderUtility.DrawEquipmentAiming(gun, pivot, aim);
+        }
+
+        /// <summary>
+        /// Where the weapon art's centroid lands, relative to the draw point, for the mesh
+        /// and rotation PawnRenderUtility.DrawEquipmentAiming will use at this aim angle.
+        /// Subtracting it puts the art's visual centre on the pivot.
+        /// </summary>
+        private Vector3 ArtCentroidWorld(float aimAngle)
+        {
+            Graphic graphic = gun.Graphic;
+            Material mat = graphic is Graphic_StackCount stack
+                ? stack.SubGraphicForStackCount(1, gun.def).MatSingleFor(gun)
+                : graphic.MatSingleFor(gun);
+            Vector2 uv = WeaponArtCentroid.OffsetFor(mat?.mainTexture);
+            if (uv == Vector2.zero) return Vector3.zero;
+
+            // Mirrors DrawEquipmentAiming's choice of mesh and angle.
+            float angle = aimAngle - 90f;
+            bool flipped = aimAngle > 200f && aimAngle < 340f;
+            if (flipped)
+            {
+                angle -= 180f;
+                angle -= gun.def.equippedAngleOffset;
+            }
+            else
+            {
+                angle += gun.def.equippedAngleOffset;
+            }
+            Vector3 local = new Vector3(uv.x * graphic.drawSize.x * (flipped ? -1f : 1f), 0f, uv.y * graphic.drawSize.y);
+            return Quaternion.AngleAxis(angle % 360f, Vector3.up) * local;
         }
 
         // ---------------------------------------------------------------- UI
@@ -426,9 +549,24 @@ namespace MountedWeapons
                 .Where(t => t.Spawned && !t.IsForbidden(Faction.OfPlayer) && MountUtility.CanMount(t, out _))
                 .OrderBy(t => t.def.label)
                 .ThenByDescending(t => t.TryGetQuality(out QualityCategory q) ? (int)q : -1);
-            foreach (Thing weapon in candidates)
+            // Weapons another mount is already waiting for are listed last and greyed out.
+            Dictionary<Thing, Building_WeaponMount> claimed = new Dictionary<Thing, Building_WeaponMount>();
+            foreach (Building_WeaponMount other in Map.listerBuildings.AllBuildingsColonistOfClass<Building_WeaponMount>())
+            {
+                if (other != this && other.pendingWeapon != null)
+                {
+                    claimed[other.pendingWeapon] = other;
+                }
+            }
+            foreach (Thing weapon in candidates.OrderBy(t => claimed.ContainsKey(t)))
             {
                 Thing local = weapon;
+                if (claimed.TryGetValue(local, out Building_WeaponMount owner))
+                {
+                    options.Add(new FloatMenuOption("MW_WeaponClaimed".Translate(local.LabelCap, owner.Label), null, local, Color.white,
+                        mouseoverGuiAction: _ => { TargetHighlighter.Highlight(local); TargetHighlighter.Highlight(owner); }));
+                    continue;
+                }
                 options.Add(new FloatMenuOption(local.LabelCap, () => pendingWeapon = local, local, Color.white,
                     mouseoverGuiAction: _ => TargetHighlighter.Highlight(local)));
             }

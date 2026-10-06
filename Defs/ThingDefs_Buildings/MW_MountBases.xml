@@ -27,6 +27,9 @@
     </thingCategories>
     <terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
     <designationCategory>Security</designationCategory>
+    <placeWorkers>
+      <li>MountedWeapons.PlaceWorker_FiringArc</li>
+    </placeWorkers>
     <building>
       <turretGunDef>MW_EmptyMountGun</turretGunDef>
       <!-- The mount runs the weapon's own warmup and cooldown in code. -->

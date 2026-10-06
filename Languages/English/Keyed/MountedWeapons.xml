@@ -8,6 +8,8 @@
   <MW_CommandRemoveWeapon>Remove weapon</MW_CommandRemoveWeapon>
   <MW_CommandRemoveWeaponDesc>Take the weapon off the mount and drop it beside it.</MW_CommandRemoveWeaponDesc>
   <MW_NoMountableWeapons>No mountable weapons on this map</MW_NoMountableWeapons>
+  <MW_WeaponClaimed>{0} (chosen for {1})</MW_WeaponClaimed>
+  <MW_TargetOutsideArc>Target is outside the mount's firing arc.</MW_TargetOutsideArc>
 
   <MW_InspectMounted>Mounted: {0}</MW_InspectMounted>
   <MW_InspectRange>Range: {0} ({1} of normal)</MW_InspectRange>
@@ -20,5 +22,38 @@
 
   <MW_CoreLost>The {0} inside the {1} was destroyed with it.</MW_CoreLost>
   <MW_CoreSurvived>The {0} survived the destruction of the {1}.</MW_CoreSurvived>
+
+  <!-- Settings -->
+  <MW_Settings_TabGeneral>General</MW_Settings_TabGeneral>
+  <MW_Settings_TabManned>Manned mounts</MW_Settings_TabManned>
+  <MW_Settings_TabAutomated>Automated mounts</MW_Settings_TabAutomated>
+  <MW_Settings_Reset>Reset this tab</MW_Settings_Reset>
+  <MW_Settings_ResetTip>Return every value on this tab to its default. The other tabs are left alone.</MW_Settings_ResetTip>
+
+  <MW_Settings_SectionArcs>Firing arcs</MW_Settings_SectionArcs>
+  <MW_Settings_MannedArc>Manned mount firing arc</MW_Settings_MannedArc>
+  <MW_Settings_MannedArcHint>Total angle a manned mount can fire across, centred on the direction it faces. The gunner stands behind it, so they can't swing it round past themselves.</MW_Settings_MannedArcHint>
+  <MW_Settings_AutomatedArc>Automated mount firing arc</MW_Settings_AutomatedArc>
+  <MW_Settings_AutomatedArcHint>Total angle an automated mount can fire across, centred on the direction it faces.</MW_Settings_AutomatedArcHint>
+  <MW_Settings_ArcUnlimited>Unlimited</MW_Settings_ArcUnlimited>
+
+  <MW_Settings_SectionDestruction>When a mount is destroyed</MW_Settings_SectionDestruction>
+  <MW_Settings_WeaponDamage>Most damage to the mounted weapon</MW_Settings_WeaponDamage>
+  <MW_Settings_WeaponDamageHint>The weapon drops beside the wreck and loses a random share of its hit points, up to this much. It is never destroyed this way.</MW_Settings_WeaponDamageHint>
+  <MW_Settings_CoreLoss>Chance to lose the core</MW_Settings_CoreLoss>
+  <MW_Settings_CoreLossHint>For automated mounts destroyed in combat. Deconstructing a mount always returns its core.</MW_Settings_CoreLossHint>
+
+  <MW_Settings_SectionDisplay>Display</MW_Settings_SectionDisplay>
+  <MW_Settings_CenterWeapons>Center weapon art on the mount</MW_Settings_CenterWeapons>
+  <MW_Settings_CenterWeaponsHint>Turns the weapon around the middle of its art instead of the middle of its texture. Fixes weapons like the minigun that are drawn off to one side.</MW_Settings_CenterWeaponsHint>
+
+  <MW_Settings_MannedIntro>Values for each manned mount. Changes apply to mounts already built.</MW_Settings_MannedIntro>
+  <MW_Settings_AutomatedIntro>Values for each automated mount. Changes apply to mounts already built.</MW_Settings_AutomatedIntro>
+  <MW_Settings_Range>Weapon range</MW_Settings_Range>
+  <MW_Settings_Stability>Misses removed</MW_Settings_Stability>
+  <MW_Settings_StabilityHint>Share of the gunner's misses the mount turns into hits, per cell of distance.</MW_Settings_StabilityHint>
+  <MW_Settings_Accuracy>Accuracy per cell</MW_Settings_Accuracy>
+  <MW_Settings_AccuracyHint>A level 8 shooter is about 96%, level 14 about 98%.</MW_Settings_AccuracyHint>
+  <MW_Settings_Aim>Aiming time</MW_Settings_Aim>
 
 </LanguageData>

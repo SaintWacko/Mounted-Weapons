@@ -43,5 +43,34 @@ namespace MountedWeapons
 
         /// <summary>Where the weapon sits on the base art, in cells, for a north-facing mount.</summary>
         public Vector2 weaponDrawOffset = Vector2.zero;
+
+        /// <summary>
+        /// Optional gun shield drawn over the weapon and turned with its aim, so it looks
+        /// attached to the gun. Texture path relative to Textures/, drawn as if the gun
+        /// points north (up the image). Purely visual: cover still comes from fillPercent.
+        /// </summary>
+        public string shieldTexPath;
+
+        /// <summary>Size of the shield texture in cells.</summary>
+        public Vector2 shieldDrawSize = Vector2.one;
+
+        /// <summary>How far in front of the weapon's pivot the shield sits, in cells, along the aim.</summary>
+        public float shieldOffset = 0f;
+
+        // Built lazily on first draw: GraphicDatabase has to be touched on the main
+        // thread after textures load, which DefModExtension construction is not.
+        [Unsaved] private Graphic shieldGraphic;
+
+        public Graphic ShieldGraphic
+        {
+            get
+            {
+                if (shieldGraphic == null && !shieldTexPath.NullOrEmpty())
+                {
+                    shieldGraphic = GraphicDatabase.Get<Graphic_Single>(shieldTexPath, ShaderDatabase.Cutout, shieldDrawSize, Color.white);
+                }
+                return shieldGraphic;
+            }
+        }
     }
 }

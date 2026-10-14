@@ -37,17 +37,31 @@
     <defName>MW_WeaponMountReinforced</defName>
     <label>reinforced weapon mount</label>
     <description>A heavy machined mount with a recoil-absorbing cradle and a sandbagged front. A colonist mans it from behind and fires the mounted weapon at 125% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the mount removes 35% of their misses and cuts aiming time by 10%. It gives the gunner medium cover from the front.</description>
+    <uiIconPath>Things/Building/Linked/MW_ReinforcedMount_MenuIcon</uiIconPath>
     <graphicData>
-      <texPath>Things/Building/Security/MW_WeaponMountReinforced</texPath>
+      <texPath>Things/Building/Linked/MW_ReinforcedMount_Atlas</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <linkType>Basic</linkType>
+      <linkFlags><li>Sandbags</li></linkFlags>
     </graphicData>
+    <building>
+      <blueprintGraphicData>
+        <texPath>Things/Building/Linked/Sandbags_Blueprint_Atlas</texPath>
+      </blueprintGraphicData>
+    </building>
     <stuffCategories>
-      <li>Metallic</li>
-      <li>Stony</li>
+      <li>Leathery</li>
+      <li>Fabric</li>
     </stuffCategories>
-    <costStuffCount>60</costStuffCount>
+    <colorPerStuff>
+      <li>
+        <stuff>Cloth</stuff>
+        <color>(139,122,87)</color>
+      </li>
+    </colorPerStuff>
+    <costStuffCount>5</costStuffCount>
     <costList>
-      <Steel>40</Steel>
-      <ComponentIndustrial>2</ComponentIndustrial>
+      <Steel>50</Steel>
     </costList>
     <fillPercent>0.55</fillPercent>
     <constructionSkillPrerequisite>4</constructionSkillPrerequisite>
@@ -99,6 +113,9 @@
         <rangeMultiplier>1.35</rangeMultiplier>
         <stability>0.5</stability>
         <warmupFactor>0.8</warmupFactor>
+        <shieldTexPath>Things/Building/Security/MW_GunShield</shieldTexPath>
+        <shieldDrawSize>(1.1,1.1)</shieldDrawSize>
+        <shieldOffset>0.25</shieldOffset>
       </li>
     </modExtensions>
   </ThingDef>

@@ -15,9 +15,86 @@
     },
     {
       "startedAt": 1791322964835,
-      "endedAt": null,
-      "reason": null,
+      "endedAt": 1791323609073,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791340543792,
+      "endedAt": 1791340561258,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791933953958,
+      "endedAt": 1791934073627,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791934088152,
+      "endedAt": 1791935082676,
+      "reason": "game-closed",
       "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791935144661,
+      "endedAt": 1791935438676,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791935479446,
+      "endedAt": 1791935679534,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791937727693,
+      "endedAt": 1791937931952,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791937932009,
+      "endedAt": 1791939580546,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791939643267,
+      "endedAt": 1791939875053,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791939875111,
+      "endedAt": 1791946994950,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791946995004,
+      "endedAt": 1791948197053,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791948197114,
+      "endedAt": 1791949339953,
+      "reason": "game-closed",
+      "errorClasses": 1,
       "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
     }
   ]

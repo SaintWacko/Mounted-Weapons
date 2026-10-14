@@ -417,11 +417,29 @@ namespace MountedWeapons
             Vector3 offset = new Vector3(Ext.weaponDrawOffset.x, 0f, Ext.weaponDrawOffset.y).RotatedBy(Rotation.AsAngle);
             Vector3 pivot = drawLoc + offset + Altitudes.AltIncVect * 2f;
             float aim = Top.CurRotation;
+            Vector3 mountPoint = pivot;
             if (MountSettings.Get.centerWeapons)
             {
                 pivot -= ArtCentroidWorld(aim);
             }
             PawnRenderUtility.DrawEquipmentAiming(gun, pivot, aim);
+            DrawShield(mountPoint, aim);
+        }
+
+        /// <summary>
+        /// Draws the optional gun shield from MountExtension, turned to the weapon's aim and
+        /// pushed forward along it, one altitude step above the gun so it covers the barrel's
+        /// base. Mirrored on the same aim range DrawEquipmentAiming flips the weapon on.
+        /// </summary>
+        private void DrawShield(Vector3 mountPoint, float aim)
+        {
+            Graphic shield = Ext.ShieldGraphic;
+            if (shield == null) return;
+            Vector3 pos = mountPoint + new Vector3(0f, 0f, Ext.shieldOffset).RotatedBy(aim) + Altitudes.AltIncVect;
+            bool flipped = aim > 200f && aim < 340f;
+            Vector3 scale = new Vector3(Ext.shieldDrawSize.x, 1f, Ext.shieldDrawSize.y);
+            Matrix4x4 matrix = Matrix4x4.TRS(pos, Quaternion.AngleAxis(aim % 360f, Vector3.up), scale);
+            Graphics.DrawMesh(flipped ? MeshPool.plane10Flip : MeshPool.plane10, matrix, shield.MatSingle, 0);
         }
 
         /// <summary>

@@ -88,13 +88,27 @@
     <defName>MW_GunEmplacement</defName>
     <label>armored gun emplacement</label>
     <description>A plasteel-shielded emplacement with a stabilized gun cradle. A colonist mans it from behind the shield and fires the mounted weapon at 135% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the emplacement removes 50% of their misses and cuts aiming time by 20%. The shield gives the gunner heavy cover from the front.</description>
+    <uiIconPath>Things/Building/Linked/MW_ArmoredMount_MenuIcon</uiIconPath>
     <graphicData>
-      <texPath>Things/Building/Security/MW_GunEmplacement</texPath>
+      <texPath>Things/Building/Linked/MW_ArmoredMount_Atlas</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <linkType>Basic</linkType>
+      <linkFlags><li>Barricades</li></linkFlags>
     </graphicData>
+    <building>
+      <blueprintGraphicData>
+        <texPath>Things/Building/Linked/Barricade_Blueprint_Atlas</texPath>
+      </blueprintGraphicData>
+    </building>
+    <stuffCategories>
+      <li>Stony</li>
+      <li>Metallic</li>
+    </stuffCategories>
+    <costStuffCount>5</costStuffCount>
     <costList>
-      <Steel>100</Steel>
+      <Steel>50</Steel>
       <Plasteel>50</Plasteel>
-      <ComponentIndustrial>4</ComponentIndustrial>
+      <ComponentIndustrial>2</ComponentIndustrial>
     </costList>
     <fillPercent>0.75</fillPercent>
     <constructionSkillPrerequisite>6</constructionSkillPrerequisite>

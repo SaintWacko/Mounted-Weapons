@@ -96,6 +96,41 @@
       "reason": "game-closed",
       "errorClasses": 1,
       "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791951867263,
+      "endedAt": 1791952078265,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791952078321,
+      "endedAt": 1791952174901,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791952174964,
+      "endedAt": 1791952199865,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791953102258,
+      "endedAt": 1791953461577,
+      "reason": "game-closed",
+      "errorClasses": 1,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791953605230,
+      "endedAt": 1791954649765,
+      "reason": "game-closed",
+      "errorClasses": 4,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
     }
   ]
 }

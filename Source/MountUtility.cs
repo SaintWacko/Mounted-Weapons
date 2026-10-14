@@ -49,8 +49,13 @@ namespace MountedWeapons
             Type verbClass = primary.verbClass;
             if (verbClass == null || primary.range <= 0f) return false;
             if (typeof(Verb_ShootOneUse).IsAssignableFrom(verbClass)) return false;
-            return typeof(Verb_LaunchProjectile).IsAssignableFrom(verbClass)
-                || typeof(Verb_ShootBeam).IsAssignableFrom(verbClass);
+            if (typeof(Verb_LaunchProjectile).IsAssignableFrom(verbClass)
+                || typeof(Verb_ShootBeam).IsAssignableFrom(verbClass)) return true;
+            // Spray verbs sweep a path of cells instead of aiming one shot. Dead Man's Switch's
+            // gatlings (Fortified.Verb_ArcSprayProjectile) are Verb_Spray subclasses that launch
+            // a real projectile at each cell, so they mount like any gun. A spray with no
+            // projectile (vanilla incinerator-style effect sprays) stays excluded.
+            return typeof(Verb_Spray).IsAssignableFrom(verbClass) && primary.defaultProjectile != null;
         }
 
         /// <summary>Whether this particular weapon can go on a mount right now.</summary>

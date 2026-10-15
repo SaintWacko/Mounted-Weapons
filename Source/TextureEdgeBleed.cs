@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using Verse;
 
@@ -18,9 +19,13 @@ namespace MountedWeapons
     /// Bleeding the colour outward makes the blend land on the surface's own colour.
     ///
     /// Done at runtime rather than asking the artist to export it, so every future shield
-    /// gets it for free. RimWorld makes loaded textures unreadable, so the pixels are read
-    /// back through a RenderTexture blit. Runs once per texture per session, main thread
-    /// only (it is called from the lazy shield graphic, which is first touched in DrawAt).
+    /// gets it for free. The pixels come from the PNG on disk where possible: with texture
+    /// compression on (the default) the loaded copy is DXT5, whose 4x4 blocks share one
+    /// colour range, so the black transparent pixels have already darkened the visible edge
+    /// pixels in it and bleeding those would copy the dark edge outward. Only when no PNG
+    /// can be found (a .dds, an asset bundle) is the GPU copy read back through a blit.
+    /// Runs once per texture per session, main thread only (it is called from the lazy
+    /// shield graphic, which is first touched in DrawAt).
     /// </summary>
     public static class TextureEdgeBleed
     {
@@ -28,13 +33,13 @@ namespace MountedWeapons
         // def asked twice) don't redo the work or bleed an already bled copy.
         private static readonly HashSet<Material> done = new HashSet<Material>();
 
-        public static void Apply(Material mat)
+        public static void Apply(Material mat, string texPath)
         {
             if (mat == null || !done.Add(mat)) return;
             if (!(mat.mainTexture is Texture2D source)) return;
             try
             {
-                Texture2D bled = Bleed(source);
+                Texture2D bled = Bleed(source, texPath);
                 if (bled != null) mat.mainTexture = bled;
             }
             catch (Exception e)
@@ -44,10 +49,10 @@ namespace MountedWeapons
             }
         }
 
-        private static Texture2D Bleed(Texture2D source)
+        private static Texture2D Bleed(Texture2D source, string texPath)
         {
             int w = source.width, h = source.height;
-            Color32[] px = ReadPixels(source);
+            Color32[] px = ReadPng(texPath, w, h) ?? ReadBackGpu(source);
             int n = w * h;
 
             bool[] solid = new bool[n];
@@ -104,25 +109,58 @@ namespace MountedWeapons
             return result;
         }
 
-        private static Color32[] ReadPixels(Texture2D source)
+        /// <summary>
+        /// Decodes the original PNG, searching running mods last-loaded first (the same
+        /// precedence ContentFinder gives a texture path two mods both ship) and each mod's
+        /// content folders in load order. Null when there is no PNG or its size does not
+        /// match the loaded texture, which means the loaded copy came from somewhere else.
+        /// </summary>
+        private static Color32[] ReadPng(string texPath, int w, int h)
+        {
+            if (texPath.NullOrEmpty()) return null;
+            string rel = Path.Combine("Textures", texPath + ".png");
+            List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
+            for (int m = mods.Count - 1; m >= 0; m--)
+            {
+                foreach (string folder in mods[m].foldersToLoadDescendingOrder)
+                {
+                    string file = Path.Combine(folder, rel);
+                    if (!File.Exists(file)) continue;
+                    Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false);
+                    try
+                    {
+                        if (!decoded.LoadImage(File.ReadAllBytes(file))) return null;
+                        if (decoded.width != w || decoded.height != h) return null;
+                        return decoded.GetPixels32();
+                    }
+                    finally
+                    {
+                        UnityEngine.Object.Destroy(decoded);
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static Color32[] ReadBackGpu(Texture2D source)
         {
             RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
             RenderTexture previous = RenderTexture.active;
+            Texture2D readable = null;
             try
             {
                 Graphics.Blit(source, rt);
                 RenderTexture.active = rt;
-                Texture2D readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, mipChain: false);
+                readable = new Texture2D(source.width, source.height, TextureFormat.RGBA32, mipChain: false);
                 readable.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
                 readable.Apply();
-                Color32[] px = readable.GetPixels32();
-                UnityEngine.Object.Destroy(readable);
-                return px;
+                return readable.GetPixels32();
             }
             finally
             {
                 RenderTexture.active = previous;
                 RenderTexture.ReleaseTemporary(rt);
+                if (readable != null) UnityEngine.Object.Destroy(readable);
             }
         }
 

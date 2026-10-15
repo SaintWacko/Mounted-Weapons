@@ -84,7 +84,7 @@ namespace MountedWeapons
             // Shield art is cut into layers, and the cut edges otherwise filter toward the
             // black that image editors store in transparent pixels: a dark seam that
             // flickers with zoom. See TextureEdgeBleed for the why.
-            TextureEdgeBleed.Apply(graphic.MatSingle);
+            TextureEdgeBleed.Apply(graphic.MatSingle, texPath);
             return graphic;
         }
     }

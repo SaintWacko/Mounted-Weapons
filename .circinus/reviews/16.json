@@ -50,7 +50,7 @@
     "Shared material swap: Graphic_Single.Init takes MatFrom(MaterialPool) keyed on texture/shader/colour; MW_GunShield textures are referenced only in MW_MannedMounts.xml:130-131, so only the two shield …",
     "filterMode, anisoLevel and wrapMode copied from the source match vanilla's settings on both load paths; vanilla never sets a mipmap bias, so leaving it out loses nothing",
     "The bleed loop: seeding, growing one ring at a time, alpha kept at 0, and an early return for fully opaque or fully transparent textures",
-    "MW_GunShield_Front.png and MW_GunShield.png look to share one canvas size, as shieldFrontTexPath requires",
+    "MW_GunShield_Front.png and MW_GunShield.png look to share one canvas size, as shieldTopTexPath requires",
     "shieldOffset 0.25 -> 0.35 XML change is a plain float on an existing field",
     "No Harmony patches in the diff; Roslyn reports no errors or warnings in either changed file; no lint rule applies to the changed code",
     "pyxis_mod_errors could not run: no Pyxis token is configured (Settings → Integrations)"

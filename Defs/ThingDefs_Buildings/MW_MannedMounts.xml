@@ -128,7 +128,7 @@
         <stability>0.5</stability>
         <warmupFactor>0.8</warmupFactor>
         <shieldTexPath>Things/Building/Security/MW_GunShield</shieldTexPath>
-        <shieldFrontTexPath>Things/Building/Security/MW_GunShield_Front</shieldFrontTexPath>
+        <shieldTopTexPath>Things/Building/Security/MW_GunShield_Top</shieldTopTexPath>
         <shieldDrawSize>(1.5,1.5)</shieldDrawSize>
         <shieldOffset>0.35</shieldOffset>
       </li>

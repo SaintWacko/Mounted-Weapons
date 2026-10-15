@@ -58,7 +58,7 @@ namespace MountedWeapons
         /// layering on the top-down map camera, not draw order, which is why one sprite can't
         /// sit both under and over the gun. The canvas must match shieldTexPath's exactly.
         /// </summary>
-        public string shieldFrontTexPath;
+        public string shieldTopTexPath;
 
         /// <summary>Size of the shield texture in cells.</summary>
         public Vector2 shieldDrawSize = Vector2.one;
@@ -75,7 +75,7 @@ namespace MountedWeapons
             shieldGraphic ?? (shieldGraphic = MakeShieldGraphic(shieldTexPath));
 
         public Graphic ShieldFrontGraphic =>
-            shieldFrontGraphic ?? (shieldFrontGraphic = MakeShieldGraphic(shieldFrontTexPath));
+            shieldFrontGraphic ?? (shieldFrontGraphic = MakeShieldGraphic(shieldTopTexPath));
 
         private Graphic MakeShieldGraphic(string texPath)
         {

@@ -428,18 +428,29 @@ namespace MountedWeapons
 
         /// <summary>
         /// Draws the optional gun shield from MountExtension, turned to the weapon's aim and
-        /// pushed forward along it, one altitude step above the gun so it covers the barrel's
-        /// base. Mirrored on the same aim range DrawEquipmentAiming flips the weapon on.
+        /// pushed forward along it. The back layer sits one altitude step below the gun and
+        /// the optional front layer one step above it, so the barrel shows between them as if
+        /// through the slot. Draw order doesn't matter; altitude (y) decides what's on top.
+        /// Both layers mirror on the same aim range DrawEquipmentAiming flips the weapon on.
         /// </summary>
         private void DrawShield(Vector3 mountPoint, float aim)
         {
-            Graphic shield = Ext.ShieldGraphic;
-            if (shield == null) return;
-            Vector3 pos = mountPoint + new Vector3(0f, 0f, Ext.shieldOffset).RotatedBy(aim) - Altitudes.AltIncVect;
-            bool flipped = aim > 200f && aim < 340f;
+            Graphic back = Ext.ShieldGraphic;
+            Graphic front = Ext.ShieldFrontGraphic;
+            if (back == null && front == null) return;
+            Vector3 pos = mountPoint + new Vector3(0f, 0f, Ext.shieldOffset).RotatedBy(aim);
+            Mesh mesh = aim > 200f && aim < 340f ? MeshPool.plane10Flip : MeshPool.plane10;
+            Quaternion rot = Quaternion.AngleAxis(aim % 360f, Vector3.up);
             Vector3 scale = new Vector3(Ext.shieldDrawSize.x, 1f, Ext.shieldDrawSize.y);
-            Matrix4x4 matrix = Matrix4x4.TRS(pos, Quaternion.AngleAxis(aim % 360f, Vector3.up), scale);
-            Graphics.DrawMesh(flipped ? MeshPool.plane10Flip : MeshPool.plane10, matrix, shield.MatSingle, 0);
+            if (back != null)
+            {
+                // mountPoint is the gun's altitude, so one step down is under the gun.
+                Graphics.DrawMesh(mesh, Matrix4x4.TRS(pos - Altitudes.AltIncVect, rot, scale), back.MatSingle, 0);
+            }
+            if (front != null)
+            {
+                Graphics.DrawMesh(mesh, Matrix4x4.TRS(pos + Altitudes.AltIncVect, rot, scale), front.MatSingle, 0);
+            }
         }
 
         /// <summary>

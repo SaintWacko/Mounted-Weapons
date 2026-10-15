@@ -45,11 +45,20 @@ namespace MountedWeapons
         public Vector2 weaponDrawOffset = Vector2.zero;
 
         /// <summary>
-        /// Optional gun shield drawn over the weapon and turned with its aim, so it looks
+        /// Optional gun shield drawn under the weapon and turned with its aim, so it looks
         /// attached to the gun. Texture path relative to Textures/, drawn as if the gun
         /// points north (up the image). Purely visual: cover still comes from fillPercent.
         /// </summary>
         public string shieldTexPath;
+
+        /// <summary>
+        /// Optional second shield layer drawn OVER the weapon, same size, position and turn as
+        /// shieldTexPath. Holds only the pixels that should hide the barrel (the plate around
+        /// the gun slot), so the barrel reads as passing through the slot. Altitude decides
+        /// layering on the top-down map camera, not draw order, which is why one sprite can't
+        /// sit both under and over the gun. The canvas must match shieldTexPath's exactly.
+        /// </summary>
+        public string shieldFrontTexPath;
 
         /// <summary>Size of the shield texture in cells.</summary>
         public Vector2 shieldDrawSize = Vector2.one;
@@ -60,17 +69,18 @@ namespace MountedWeapons
         // Built lazily on first draw: GraphicDatabase has to be touched on the main
         // thread after textures load, which DefModExtension construction is not.
         [Unsaved] private Graphic shieldGraphic;
+        [Unsaved] private Graphic shieldFrontGraphic;
 
-        public Graphic ShieldGraphic
+        public Graphic ShieldGraphic =>
+            shieldGraphic ?? (shieldGraphic = MakeShieldGraphic(shieldTexPath));
+
+        public Graphic ShieldFrontGraphic =>
+            shieldFrontGraphic ?? (shieldFrontGraphic = MakeShieldGraphic(shieldFrontTexPath));
+
+        private Graphic MakeShieldGraphic(string texPath)
         {
-            get
-            {
-                if (shieldGraphic == null && !shieldTexPath.NullOrEmpty())
-                {
-                    shieldGraphic = GraphicDatabase.Get<Graphic_Single>(shieldTexPath, ShaderDatabase.Cutout, shieldDrawSize, Color.white);
-                }
-                return shieldGraphic;
-            }
+            if (texPath.NullOrEmpty()) return null;
+            return GraphicDatabase.Get<Graphic_Single>(texPath, ShaderDatabase.Cutout, shieldDrawSize, Color.white);
         }
     }
 }

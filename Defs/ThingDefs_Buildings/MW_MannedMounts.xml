@@ -87,7 +87,7 @@
   <ThingDef ParentName="MW_MannedMountBase">
     <defName>MW_GunEmplacement</defName>
     <label>armored gun emplacement</label>
-    <description>A stabilized pintle mount integrated into a barricade fortification, with the weapon mounted through a plasteel shield. The stabilized pintle greatly increases weapon stability, and the shield provides heavy cover from the front.</description>
+    <description>A stabilized pintle mount integrated into a barricade fortification, with the weapon mounted through a plasteel shield. It greatly increases weapon stability as well as providing heavy cover.</description>
     <uiIconPath>Things/Building/Linked/MW_ArmoredMount_MenuIcon</uiIconPath>
     <graphicData>
       <texPath>Things/Building/Linked/MW_ArmoredMount_Atlas</texPath>

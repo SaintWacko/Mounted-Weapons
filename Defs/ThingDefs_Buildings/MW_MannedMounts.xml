@@ -130,7 +130,7 @@
         <shieldTexPath>Things/Building/Security/MW_GunShield</shieldTexPath>
         <shieldFrontTexPath>Things/Building/Security/MW_GunShield_Front</shieldFrontTexPath>
         <shieldDrawSize>(1.5,1.5)</shieldDrawSize>
-        <shieldOffset>0.25</shieldOffset>
+        <shieldOffset>0.35</shieldOffset>
       </li>
     </modExtensions>
   </ThingDef>

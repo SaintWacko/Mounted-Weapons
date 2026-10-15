@@ -162,6 +162,34 @@
     },
     {
       "startedAt": 1792081072264,
+      "endedAt": 1792081791923,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1792081792009,
+      "endedAt": 1792081848110,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1792081897937,
+      "endedAt": 1792082157656,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1792082157719,
+      "endedAt": 1792082334824,
+      "reason": "game-closed",
+      "errorClasses": 0,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1792082349281,
       "endedAt": null,
       "reason": null,
       "errorClasses": 0,

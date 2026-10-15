@@ -126,6 +126,10 @@ namespace MountedWeapons
             // to Building's version, so this is its chain (Thing, ThingWithComps, Building,
             // Building_TurretGun, RimWorld 1.6) with the outer ring left out: the arc's curved
             // edge marks the range instead.
+            // Cost: patches on those four methods don't run for limited-arc mounts. The one
+            // known case is Vehicle Map Framework, which transpiles Building_TurretGun's
+            // version to map the forced-target cell off a vehicle map; on a vehicle, the
+            // target line below would point at the unmapped cell. Visual only.
             if (def.specialDisplayRadius > 0.1f) GenDraw.DrawRadiusRing(Position, def.specialDisplayRadius);
             if (def.drawPlaceWorkersWhileSelected && def.PlaceWorkers != null)
             {

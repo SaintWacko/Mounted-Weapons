@@ -33,8 +33,10 @@ namespace MountedWeapons
         // def asked twice) don't redo the work or bleed an already bled copy.
         private static readonly HashSet<Material> done = new HashSet<Material>();
 
-        // The formats ModContentLoader accepts for a texture. PNG first so that, within one
-        // folder, a PNG is preferred when deciding which file was loaded.
+        // The formats ModContentLoader accepts for a texture. If one folder holds the same
+        // name in two formats RimWorld logs a duplicate and keeps whichever the filesystem
+        // lists first; this order does not claim to match that, and the size check in
+        // ReadPng is the only guard for that (already warned-about) case.
         private static readonly string[] TextureExtensions = { ".png", ".jpg", ".jpeg", ".psd", ".dds" };
 
         public static void Apply(Material mat, string texPath)
@@ -118,6 +120,9 @@ namespace MountedWeapons
         /// precedence ContentFinder gives a texture path two mods both ship) and each mod's
         /// content folders in load order. Null when there is no PNG or its size does not
         /// match the loaded texture, which means the loaded copy came from somewhere else.
+        /// Also null ON PURPOSE when the winning mod holds the path as a .dds or any non-PNG:
+        /// that file is what is on screen, so the caller must read the GPU copy rather than
+        /// fall through to an earlier mod's PNG and swap the original art back in.
         /// </summary>
         private static Color32[] ReadPng(string texPath, int w, int h)
         {

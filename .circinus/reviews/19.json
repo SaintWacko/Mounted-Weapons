@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "buildId": 19,
+  "buildIdNote": null,
+  "reviewedAt": "2026-10-15T16:58:59.960Z",
+  "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee",
+  "focus": null,
+  "diffSource": "since build 18 (2026-10-15T16:55:32Z), the last reviewed build, from the build log",
+  "parsed": true,
+  "problem": null,
+  "stoppedBecause": null,
+  "counts": {
+    "must": 0,
+    "should": 0,
+    "note": 3
+  },
+  "findings": [
+    {
+      "severity": "note",
+      "title": "A same-folder PNG+JPG duplicate is not resolved 'PNG first' by RimWorld, contrary to the new comment",
+      "detail": "ModContentHolder.ReloadAll keeps the FIRST item LoadAllForMod yields for an extension-less path and logs 'Tried to load duplicate' for the rest. Within one folder that order is GetAllFilesForMod's dictionary insertion order: DirectoryInfo.GetFiles order, which depends on the filesystem (alphabetical on NTFS, so .jpeg/.jpg come before .png). The TextureExtensions comment says a PNG is preferred within one folder, and ReadPng may then decode a PNG that is not the texture on screen. The width/height check catches it only when the sizes differ. This only happens with a mod that already gets a duplicate-load warning, so it is rare. The single change: reword the comment so it does not claim RimWorld prefers the PNG (or return null when a folder holds more than one non-dds hit).",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/TextureEdgeBleed.cs:36"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "File.Exists with lowercase extensions misses a retexture's .PNG/.DDS on case-sensitive filesystems",
+      "detail": "RimWorld accepts texture extensions case-insensitively (IsAcceptableExtension lowercases, and the dds shadow set uses ToLowerInvariant). The probe here builds rel + \".dds\" etc. and calls File.Exists, which is case-sensitive on Linux. A higher-priority mod shipping X.DDS or X.PNG is then skipped, and the loop falls through to an earlier mod's PNG: the art-swap this diff was written to prevent. Only the size check guards it. The single change: list the folder's files that start with the texture name and compare Path.GetExtension with OrdinalIgnoreCase instead of File.Exists per extension.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/TextureEdgeBleed.cs:140"
+      }
+    },
+    {
+      "severity": "note",
+      "title": "ReadPng's doc comment no longer describes when it returns null",
+      "detail": "The summary says it returns null when there is no PNG or the size does not match. It now also returns null on purpose when the winning mod holds a .dds or a non-PNG, so that the GPU copy is read. Update the summary so the next reader does not 'fix' that early return.",
+      "evidence": {
+        "kind": "index",
+        "ref": "Source/TextureEdgeBleed.cs:115"
+      }
+    }
+  ],
+  "checked": [
+    "TextureExtensions matches ModContentLoader.AcceptableExtensionsTexture exactly (Verse/ModContentLoader.cs:16)",
+    "hasDds across all of a mod's folders matches LoadAllForMod skipping any non-dds file whose relative path has a .dds sibling anywhere in the mod (ModContentLoader.cs:55-73)",
+    "Folder order (first folder in foldersToLoadDescendingOrder wins) matches GetAllFilesForMod's !ContainsKey insertion (ModContentPack.cs:390-413)",
+    "Last-loaded-mod-first search matches ContentFinder<T>.Get, and asset bundles come only after every mod's loose files, so falling through to an earlier mod when the top mod has no loose file is correc…",
+    "The decoded Texture2D is destroyed in finally on every return path, including LoadImage failure and size mismatch",
+    "Caller passes the same texPath given to GraphicDatabase.Get<Graphic_Single> (Source/MountExtension.cs:83-87)",
+    "No Harmony patches in the changed file; lint rules (prefix-returns-void, defof-in-mod-ctor, patch-success-always, tickerType-missing, wrong-target-framework) do not apply to this diff",
+    "Roslyn reports no errors or warnings for Source/TextureEdgeBleed.cs",
+    "pyxis_mod_errors could not run: no Pyxis token is configured (Settings → Integrations)"
+  ],
+  "unreviewed": [],
+  "outOfScope": [],
+  "reviewed": [
+    "Source/TextureEdgeBleed.cs"
+  ],
+  "parts": 1,
+  "buildCommit": "a367a5226d34e370594beb014f83d8c4c138fe34",
+  "partial": false
+}

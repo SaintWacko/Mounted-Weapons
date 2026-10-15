@@ -65,7 +65,7 @@ namespace MountedWeapons.Ammo
             return Mathf.RoundToInt(baseTicks / Mathf.Max(speed, 0.1f));
         }
 
-        public override IEnumerable<Toil> MakeNewToils()
+        protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDespawnedOrNull(MountInd);
             this.FailOn(() =>

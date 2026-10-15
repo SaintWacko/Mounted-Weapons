@@ -113,9 +113,49 @@ namespace MountedWeapons
 
         public override void DrawExtraSelectionOverlays()
         {
-            base.DrawExtraSelectionOverlays();
             float radius = HasWeapon ? AttackVerb.EffectiveRange : 12f;
+            if (FiringArc.Unlimited(Arc))
+            {
+                // A full circle is exactly what Building_TurretGun draws.
+                base.DrawExtraSelectionOverlays();
+                return;
+            }
+
+            // Building_TurretGun's override always draws a full range ring, which sat on top
+            // of the arc and read as if the mount could fire all round. C# can't call past it
+            // to Building's version, so this is its chain (Thing, ThingWithComps, Building,
+            // Building_TurretGun, RimWorld 1.6) with the outer ring left out: the arc's curved
+            // edge marks the range instead.
+            if (def.specialDisplayRadius > 0.1f) GenDraw.DrawRadiusRing(Position, def.specialDisplayRadius);
+            if (def.drawPlaceWorkersWhileSelected && def.PlaceWorkers != null)
+            {
+                for (int i = 0; i < def.PlaceWorkers.Count; i++)
+                    def.PlaceWorkers[i].DrawGhost(def, Position, Rotation, Color.white, this);
+            }
+            GenDraw.DrawInteractionCells(def, Position, Rotation);
+            foreach (ThingComp comp in AllComps) comp.PostDrawExtraSelectionOverlays();
+            Blueprint_Install blueprint = InstallBlueprintUtility.ExistingBlueprintFor(this);
+            if (blueprint != null) GenDraw.DrawLineBetween(this.TrueCenter(), blueprint.TrueCenter());
+
             FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
+            if (HasWeapon)
+            {
+                // The minimum range stays a full ring: it's where the gun can't fire at all.
+                float minRange = AttackVerb.verbProps.EffectiveMinRange(allowAdjacentShot: true);
+                if (minRange > 0.1f && minRange < 90f && minRange < radius) GenDraw.DrawRadiusRing(Position, minRange);
+            }
+            if (burstWarmupTicksLeft > 0)
+            {
+                GenDraw.DrawAimPie(this, CurrentTarget, (int)(burstWarmupTicksLeft * 0.5f), def.size.x * 0.5f);
+            }
+            if (forcedTarget.IsValid && (!forcedTarget.HasThing || forcedTarget.Thing.Spawned))
+            {
+                Vector3 b = forcedTarget.HasThing ? forcedTarget.Thing.TrueCenter() : forcedTarget.Cell.ToVector3Shifted();
+                Vector3 a = this.TrueCenter();
+                b.y = AltitudeLayer.MetaOverlays.AltitudeFor();
+                a.y = b.y;
+                GenDraw.DrawLineBetween(a, b, ForcedTargetLineMat);
+            }
         }
 
         private void RescaleRanges()

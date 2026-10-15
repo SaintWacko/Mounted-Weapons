@@ -12,11 +12,13 @@ namespace MountedWeapons
         private static readonly Dictionary<ThingDef, bool> mountableCache = new Dictionary<ThingDef, bool>();
         private static ThingCategoryDef grenadesCategory;
         private static bool grenadesSearched;
+        private static WeaponClassDef neolithicClass;
+        private static bool neolithicSearched;
 
         /// <summary>
         /// Whether this kind of weapon can ever go on a mount: a ranged primary weapon
         /// that fires projectiles or a beam, not a single-use launcher, not a grenade,
-        /// and not a turret's built-in gun.
+        /// not a muscle-powered neolithic weapon, and not a turret's built-in gun.
         /// </summary>
         public static bool IsMountableDef(ThingDef def)
         {
@@ -42,6 +44,18 @@ namespace MountedWeapons
                 grenadesSearched = true;
             }
             if (grenadesCategory != null && def.IsWithinCategory(grenadesCategory)) return false;
+
+            // Muscle-powered weapons: bows, slings, pila, throwing knives and axes, shuriken.
+            // Vanilla's BaseWeaponNeolithic gives them the Neolithic weapon class, and the
+            // modded ones (VWE Tribal, VFE Medieval 2, T's Samurai) inherit from that parent,
+            // so the class catches them even when the def's own techLevel says Medieval.
+            // A frame can't draw a bow or throw a knife.
+            if (!neolithicSearched)
+            {
+                neolithicClass = DefDatabase<WeaponClassDef>.GetNamedSilentFail("Neolithic");
+                neolithicSearched = true;
+            }
+            if (neolithicClass != null && def.weaponClasses != null && def.weaponClasses.Contains(neolithicClass)) return false;
 
             List<VerbProperties> verbs = def.Verbs;
             if (verbs.NullOrEmpty()) return false;

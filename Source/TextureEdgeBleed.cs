@@ -14,7 +14,7 @@ namespace MountedWeapons
     /// pixel is drawn as a blend with the transparent pixels beside it. Most editors (Pinta
     /// included, with no option to change it) save transparent pixels as RGB 0,0,0, so that
     /// blend pulls edges toward black. On an outer outline nobody notices; on a layer cut
-    /// across a flat surface, like the gun shield's front layer, it shows as a dark seam
+    /// across a flat surface, like the gun shield's top layer, it shows as a dark seam
     /// that flickers in and out as the zoom picks a different mip and pixel alignment.
     /// Bleeding the colour outward makes the blend land on the surface's own colour.
     ///

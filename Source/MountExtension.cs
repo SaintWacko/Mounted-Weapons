@@ -69,13 +69,13 @@ namespace MountedWeapons
         // Built lazily on first draw: GraphicDatabase has to be touched on the main
         // thread after textures load, which DefModExtension construction is not.
         [Unsaved] private Graphic shieldGraphic;
-        [Unsaved] private Graphic shieldFrontGraphic;
+        [Unsaved] private Graphic shieldTopGraphic;
 
         public Graphic ShieldGraphic =>
             shieldGraphic ?? (shieldGraphic = MakeShieldGraphic(shieldTexPath));
 
-        public Graphic ShieldFrontGraphic =>
-            shieldFrontGraphic ?? (shieldFrontGraphic = MakeShieldGraphic(shieldTopTexPath));
+        public Graphic ShieldTopGraphic =>
+            shieldTopGraphic ?? (shieldTopGraphic = MakeShieldGraphic(shieldTopTexPath));
 
         private Graphic MakeShieldGraphic(string texPath)
         {

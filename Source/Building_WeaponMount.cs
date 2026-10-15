@@ -416,7 +416,12 @@ namespace MountedWeapons
             if (!HasWeapon) return;
             Vector3 offset = new Vector3(Ext.weaponDrawOffset.x, 0f, Ext.weaponDrawOffset.y).RotatedBy(Rotation.AsAngle);
             Vector3 pivot = drawLoc + offset + Altitudes.AltIncVect * 2f;
-            float aim = Top.CurRotation;
+            // Spray and beam verbs sweep across a path during a burst and report the cell
+            // they are on through AimAngleOverride; vanilla TurretTop.DrawTurret draws with
+            // it, so a mounted gatling or beam gun turns with its shots instead of pointing
+            // at the original target. Not clamped to the firing arc: the gun points where
+            // the rounds actually go.
+            float aim = CurrentEffectiveVerb?.AimAngleOverride ?? Top.CurRotation;
             Vector3 mountPoint = pivot;
             if (MountSettings.Get.centerWeapons)
             {

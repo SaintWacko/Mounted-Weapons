@@ -22,7 +22,7 @@
   <ThingDef ParentName="MW_AutoMountBase">
     <defName>MW_AutoMountBasic</defName>
     <label>basic auto-mount</label>
-    <description>A powered weapon mount run by a basic subcore. It aims and fires the mounted weapon on its own at 120% of its normal range, with the accuracy of a level 6 shooter.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <description>A powered weapon mount run by a basic subcore. Its skill is approximately equivalent to a level 6 shooter.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_AutoMountBasic</texPath>
     </graphicData>
@@ -66,7 +66,7 @@
   <ThingDef ParentName="MW_AutoMountBase">
     <defName>MW_AutoMountStandard</defName>
     <label>standard auto-mount</label>
-    <description>A powered weapon mount run by a standard subcore. It aims and fires the mounted weapon on its own at 125% of its normal range, with the accuracy of a level 10 shooter and 10% faster aiming.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <description>A powered weapon mount run by a standard subcore. Its skill is approximately equivalent to a level 10 shooter.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_AutoMountStandard</texPath>
     </graphicData>
@@ -112,7 +112,7 @@
   <ThingDef ParentName="MW_AutoMountBase">
     <defName>MW_AutoMountHigh</defName>
     <label>high auto-mount</label>
-    <description>A powered weapon mount run by a high subcore. It aims and fires the mounted weapon on its own at 130% of its normal range, with the accuracy of a level 14 shooter and 20% faster aiming. Its core can take target orders.\n\nDeconstructing it returns the subcore. If the mount is destroyed, there is a 50% chance the subcore is lost.</description>
+    <description>A powered weapon mount run by a high subcore. Its skill is approximately equivalent to a level 14 shooter.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_AutoMountHigh</texPath>
     </graphicData>
@@ -159,7 +159,7 @@
   <ThingDef ParentName="MW_AutoMountBase">
     <defName>MW_AutoMountPersona</defName>
     <label>persona auto-mount</label>
-    <description>A powered weapon mount run by an AI persona core. It aims and fires the mounted weapon on its own at 135% of its normal range, with the accuracy of a level 18 shooter and 30% faster aiming. Its core can take target orders.\n\nDeconstructing it returns the persona core. If the mount is destroyed, there is a 50% chance the persona core is lost.</description>
+    <description>A powered weapon mount run by an AI persona core. Its skill is approximately equivalent to a level 18 shooter. Its core can take targeting orders.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_AutoMountPersona</texPath>
     </graphicData>

@@ -15,7 +15,7 @@
   <MW_InspectRange>Range: {0} ({1} of normal)</MW_InspectRange>
   <MW_InspectEmpty>No weapon mounted</MW_InspectEmpty>
   <MW_InspectPending>Waiting for a hauler to install: {0}</MW_InspectPending>
-  <MW_InspectUnmanned>Needs a colonist to man it</MW_InspectUnmanned>
+  <MW_InspectUnmanned>Needs a colonist to pull the trigger</MW_InspectUnmanned>
 
   <MW_ReasonNotMountable>This weapon can't be mounted.</MW_ReasonNotMountable>
   <MW_ReasonBiocoded>Biocoded weapons can't be mounted.</MW_ReasonBiocoded>
@@ -32,14 +32,14 @@
 
   <MW_Settings_SectionArcs>Firing arcs</MW_Settings_SectionArcs>
   <MW_Settings_MannedArc>Manned mount firing arc</MW_Settings_MannedArc>
-  <MW_Settings_MannedArcHint>Total angle a manned mount can fire across, centred on the direction it faces. The gunner stands behind it, so they can't swing it round past themselves.</MW_Settings_MannedArcHint>
+  <MW_Settings_MannedArcHint>Total angle a manned mount can fire across, centred on the direction it faces.</MW_Settings_MannedArcHint>
   <MW_Settings_AutomatedArc>Automated mount firing arc</MW_Settings_AutomatedArc>
   <MW_Settings_AutomatedArcHint>Total angle an automated mount can fire across, centred on the direction it faces.</MW_Settings_AutomatedArcHint>
   <MW_Settings_ArcUnlimited>Unlimited</MW_Settings_ArcUnlimited>
 
   <MW_Settings_SectionDestruction>When a mount is destroyed</MW_Settings_SectionDestruction>
   <MW_Settings_WeaponDamage>Most damage to the mounted weapon</MW_Settings_WeaponDamage>
-  <MW_Settings_WeaponDamageHint>The weapon drops beside the wreck and loses a random share of its hit points, up to this much. It is never destroyed this way.</MW_Settings_WeaponDamageHint>
+  <MW_Settings_WeaponDamageHint>The weapon drops beside the wreck and loses a random share of its hit points, up to this much.</MW_Settings_WeaponDamageHint>
   <MW_Settings_CoreLoss>Chance to lose the core</MW_Settings_CoreLoss>
   <MW_Settings_CoreLossHint>For automated mounts destroyed in combat. Deconstructing a mount always returns its core.</MW_Settings_CoreLossHint>
 

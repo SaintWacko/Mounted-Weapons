@@ -4,7 +4,7 @@
   <ThingDef ParentName="MW_MannedMountBase">
     <defName>MW_WeaponMount</defName>
     <label>weapon mount</label>
-    <description>A braced rest for a handheld ranged weapon. A colonist mans it from behind and fires the mounted weapon at 115% of its normal range.\n\nThe mount steadies the gunner's aim: their own shooting accuracy applies, and the mount removes 20% of their misses. It gives the gunner light cover from the front.\n\nChoose a weapon with the mount selected and a hauler brings it over.</description>
+    <description>A basic tripod for a handheld ranged weapon. It provides minimal stability and cover for the gunner.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_WeaponMount</texPath>
     </graphicData>
@@ -13,7 +13,7 @@
       <li>Metallic</li>
     </stuffCategories>
     <costStuffCount>40</costStuffCount>
-    <fillPercent>0.4</fillPercent>
+    <fillPercent>0.25</fillPercent>
     <statBases>
       <MaxHitPoints>120</MaxHitPoints>
       <Flammability>1</Flammability>
@@ -36,7 +36,7 @@
   <ThingDef ParentName="MW_MannedMountBase">
     <defName>MW_WeaponMountReinforced</defName>
     <label>reinforced weapon mount</label>
-    <description>A heavy machined mount with a recoil-absorbing cradle and a sandbagged front. A colonist mans it from behind and fires the mounted weapon at 125% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the mount removes 35% of their misses and cuts aiming time by 10%. It gives the gunner medium cover from the front.</description>
+    <description>A pintle mount integrated into a sandbag fortification. It provides moderate stability and cover equivalent to sandbag defenses.</description>
     <uiIconPath>Things/Building/Linked/MW_ReinforcedMount_MenuIcon</uiIconPath>
     <graphicData>
       <texPath>Things/Building/Linked/MW_ReinforcedMount_Atlas</texPath>
@@ -87,7 +87,7 @@
   <ThingDef ParentName="MW_MannedMountBase">
     <defName>MW_GunEmplacement</defName>
     <label>armored gun emplacement</label>
-    <description>A plasteel-shielded emplacement with a stabilized gun cradle. A colonist mans it from behind the shield and fires the mounted weapon at 135% of its normal range.\n\nThe gunner's own shooting accuracy applies, and the emplacement removes 50% of their misses and cuts aiming time by 20%. The shield gives the gunner heavy cover from the front.</description>
+    <description>A stabilized pintle mount integrated into a barricade fortification, with the weapon mounted through a plasteel shield. The stabilized pintle greatly increases weapon stability, and the shield provides heavy cover from the front.</description>
     <uiIconPath>Things/Building/Linked/MW_ArmoredMount_MenuIcon</uiIconPath>
     <graphicData>
       <texPath>Things/Building/Linked/MW_ArmoredMount_Atlas</texPath>

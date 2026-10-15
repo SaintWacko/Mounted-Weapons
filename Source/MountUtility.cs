@@ -49,13 +49,17 @@ namespace MountedWeapons
             // Vanilla's BaseWeaponNeolithic gives them the Neolithic weapon class, and the
             // modded ones (VWE Tribal, VFE Medieval 2, T's Samurai) inherit from that parent,
             // so the class catches them even when the def's own techLevel says Medieval.
-            // A frame can't draw a bow or throw a knife.
+            // A frame can't draw a bow or throw a knife. Crossbows are the exception: the
+            // string is held by the mechanism, so a frame can shoot one. They are matched by
+            // defName (not label, which a translation changes), since no class or tag marks
+            // them apart from bows.
             if (!neolithicSearched)
             {
                 neolithicClass = DefDatabase<WeaponClassDef>.GetNamedSilentFail("Neolithic");
                 neolithicSearched = true;
             }
-            if (neolithicClass != null && def.weaponClasses != null && def.weaponClasses.Contains(neolithicClass)) return false;
+            if (neolithicClass != null && def.weaponClasses != null && def.weaponClasses.Contains(neolithicClass)
+                && !IsCrossbow(def)) return false;
 
             List<VerbProperties> verbs = def.Verbs;
             if (verbs.NullOrEmpty()) return false;
@@ -70,6 +74,18 @@ namespace MountedWeapons
             // a real projectile at each cell, so they mount like any gun. A spray with no
             // projectile (vanilla incinerator-style effect sprays) stays excluded.
             return typeof(Verb_Spray).IsAssignableFrom(verbClass) && primary.defaultProjectile != null;
+        }
+
+        private static readonly string[] crossbowWords = { "crossbow", "arbalest", "arbalist", "ballista" };
+
+        private static bool IsCrossbow(ThingDef def)
+        {
+            string name = def.defName.ToLowerInvariant();
+            for (int i = 0; i < crossbowWords.Length; i++)
+            {
+                if (name.Contains(crossbowWords[i])) return true;
+            }
+            return false;
         }
 
         /// <summary>Whether this particular weapon can go on a mount right now.</summary>

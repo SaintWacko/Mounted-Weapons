@@ -112,7 +112,7 @@
   <ThingDef ParentName="MW_AutoMountBase">
     <defName>MW_AutoMountHigh</defName>
     <label>high auto-mount</label>
-    <description>A powered weapon mount run by a high subcore. Its skill is approximately equivalent to a level 14 shooter.</description>
+    <description>A powered weapon mount run by a high subcore. Its skill is approximately equivalent to a level 14 shooter. Its core can take targeting orders.</description>
     <graphicData>
       <texPath>Things/Building/Security/MW_AutoMountHigh</texPath>
     </graphicData>

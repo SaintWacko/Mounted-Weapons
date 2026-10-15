@@ -84,7 +84,8 @@ namespace MountedWeapons.Ammo
             {
                 ThingDef packDef = Ammo?.ConsumableDef;
                 Thing pack = packDef != null ? MountAmmo.CarriedPack(pawn, packDef) : null;
-                if (pack == null || !pawn.inventory.innerContainer.TryTransferToContainer(pack, pawn.carryTracker.innerContainer, 1))
+                // This overload returns how many moved.
+                if (pack == null || pawn.inventory.innerContainer.TryTransferToContainer(pack, pawn.carryTracker.innerContainer, 1) < 1)
                 {
                     EndJobWith(JobCondition.Incompletable);
                     return;

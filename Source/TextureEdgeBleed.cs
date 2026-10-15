@@ -33,6 +33,10 @@ namespace MountedWeapons
         // def asked twice) don't redo the work or bleed an already bled copy.
         private static readonly HashSet<Material> done = new HashSet<Material>();
 
+        // The formats ModContentLoader accepts for a texture. PNG first so that, within one
+        // folder, a PNG is preferred when deciding which file was loaded.
+        private static readonly string[] TextureExtensions = { ".png", ".jpg", ".jpeg", ".psd", ".dds" };
+
         public static void Apply(Material mat, string texPath)
         {
             if (mat == null || !done.Add(mat)) return;
@@ -118,25 +122,39 @@ namespace MountedWeapons
         private static Color32[] ReadPng(string texPath, int w, int h)
         {
             if (texPath.NullOrEmpty()) return null;
-            string rel = Path.Combine("Textures", texPath + ".png");
+            string rel = Path.Combine("Textures", texPath);
             List<ModContentPack> mods = LoadedModManager.RunningModsListForReading;
             for (int m = mods.Count - 1; m >= 0; m--)
             {
+                // The last-loaded mod holding this path in ANY format is the one RimWorld drew
+                // from. If what it holds is not a plain PNG (a retexture's .dds or .jpg), read
+                // the GPU copy instead of falling through to an earlier mod's PNG, which would
+                // swap the original art back over the retexture.
+                string firstHit = null;
+                bool hasDds = false;
                 foreach (string folder in mods[m].foldersToLoadDescendingOrder)
                 {
-                    string file = Path.Combine(folder, rel);
-                    if (!File.Exists(file)) continue;
-                    Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false);
-                    try
+                    foreach (string ext in TextureExtensions)
                     {
-                        if (!decoded.LoadImage(File.ReadAllBytes(file))) return null;
-                        if (decoded.width != w || decoded.height != h) return null;
-                        return decoded.GetPixels32();
+                        string file = Path.Combine(folder, rel + ext);
+                        if (!File.Exists(file)) continue;
+                        if (ext == ".dds") hasDds = true;
+                        if (firstHit == null) firstHit = file;
                     }
-                    finally
-                    {
-                        UnityEngine.Object.Destroy(decoded);
-                    }
+                }
+                if (firstHit == null) continue;
+                if (hasDds || !firstHit.EndsWith(".png")) return null;
+
+                Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false);
+                try
+                {
+                    if (!decoded.LoadImage(File.ReadAllBytes(firstHit))) return null;
+                    if (decoded.width != w || decoded.height != h) return null;
+                    return decoded.GetPixels32();
+                }
+                finally
+                {
+                    UnityEngine.Object.Destroy(decoded);
                 }
             }
             return null;

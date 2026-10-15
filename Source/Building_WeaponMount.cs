@@ -422,8 +422,8 @@ namespace MountedWeapons
             {
                 pivot -= ArtCentroidWorld(aim);
             }
-            DrawShield(mountPoint, aim);
             PawnRenderUtility.DrawEquipmentAiming(gun, pivot, aim);
+            DrawShield(mountPoint, aim);
         }
 
         /// <summary>
@@ -435,7 +435,7 @@ namespace MountedWeapons
         {
             Graphic shield = Ext.ShieldGraphic;
             if (shield == null) return;
-            Vector3 pos = mountPoint + new Vector3(0f, 0f, Ext.shieldOffset).RotatedBy(aim) + Altitudes.AltIncVect;
+            Vector3 pos = mountPoint + new Vector3(0f, 0f, Ext.shieldOffset).RotatedBy(aim) - Altitudes.AltIncVect;
             bool flipped = aim > 200f && aim < 340f;
             Vector3 scale = new Vector3(Ext.shieldDrawSize.x, 1f, Ext.shieldDrawSize.y);
             Matrix4x4 matrix = Matrix4x4.TRS(pos, Quaternion.AngleAxis(aim % 360f, Vector3.up), scale);

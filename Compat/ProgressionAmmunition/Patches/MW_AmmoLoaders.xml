@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+
+  <!--
+    Every mount (manned and automated) inherits from MW_WeaponMountBase, which has no
+    <comps> of its own; children's comps lists merge with whatever this adds.
+    maxAssignedPawnsCount is the loader cap per mount. A pawn can be a loader on any
+    number of mounts: vanilla's assign window only limits that for beds.
+  -->
+  <Operation Class="PatchOperationConditional">
+    <xpath>Defs/ThingDef[@Name="MW_WeaponMountBase"]/comps</xpath>
+    <nomatch Class="PatchOperationAdd">
+      <xpath>Defs/ThingDef[@Name="MW_WeaponMountBase"]</xpath>
+      <value>
+        <comps />
+      </value>
+    </nomatch>
+  </Operation>
+
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[@Name="MW_WeaponMountBase"]/comps</xpath>
+    <value>
+      <li Class="MountedWeapons.Ammo.CompProperties_MountLoaders">
+        <maxAssignedPawnsCount>99</maxAssignedPawnsCount>
+        <drawAssignmentOverlay>false</drawAssignmentOverlay>
+        <drawUnownedAssignmentOverlay>false</drawUnownedAssignmentOverlay>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>

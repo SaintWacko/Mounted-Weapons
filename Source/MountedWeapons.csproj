@@ -10,6 +10,11 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Compat assemblies are separate projects, built by the target at the bottom. -->
+    <Compile Remove="Compat/**" />
+    <None Remove="Compat/**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
       <ExcludeAssets>runtime</ExcludeAssets>
@@ -41,4 +46,15 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+  <!--
+    Progression: Ammunition support. It references that mod's DLL, so it is its own
+    assembly in Compat/ProgressionAmmunition/Assemblies, which LoadFolders.xml only loads
+    when the mod is active. Built after this one because it references MountedWeapons.dll.
+    Restore and Build are separate MSBuild calls with different global properties so the
+    build evaluation sees the restored assets.
+  -->
+  <Target Name="BuildCompatProjects" AfterTargets="Build">
+    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Restore" Properties="MWRestore=true" />
+    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Build" />
+  </Target>
 </Project>

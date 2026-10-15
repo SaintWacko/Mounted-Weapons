@@ -17,5 +17,6 @@
   </modDependencies>
   <loadAfter>
     <li>brrainz.harmony</li>
+    <li>ferny.ProgressionAmmunition</li>
   </loadAfter>
 </ModMetaData>

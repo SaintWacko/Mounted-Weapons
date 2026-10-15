@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- Reload claims on a mount use their own layer, so they don't clash with the gunner's reservation. -->
+  <ReservationLayerDef>
+    <defName>MW_MountReload</defName>
+  </ReservationLayerDef>
+
+  <JobDef>
+    <defName>MW_ReloadMount</defName>
+    <driverClass>MountedWeapons.Ammo.JobDriver_ReloadMount</driverClass>
+    <reportString>reloading TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+  </JobDef>
+
+  <WorkGiverDef>
+    <defName>MW_ReloadMount</defName>
+    <label>reload mounted weapons</label>
+    <giverClass>MountedWeapons.Ammo.WorkGiver_ReloadMount</giverClass>
+    <workType>Hauling</workType>
+    <verb>reload</verb>
+    <gerund>reloading</gerund>
+    <!-- Above refuelling (140) and installing weapons (135): an empty gun matters more. -->
+    <priorityInType>145</priorityInType>
+  </WorkGiverDef>
+
+</Defs>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <MW_PA_AssignLoaders>Assign loaders</MW_PA_AssignLoaders>
+  <MW_PA_AssignLoadersDesc>Choose colonists or mechs who keep this mount loaded. A loader reloads it whenever its ammo drops to the marker on the ammo bar, as part of their hauling work. A mount can have several loaders, and a loader can serve several mounts.</MW_PA_AssignLoadersDesc>
+  <MW_PA_LoaderCannotHaul>{PAWN_labelShort} can't do hauling work.</MW_PA_LoaderCannotHaul>
+  <MW_PA_InspectLoaders>Loaders: {0}</MW_PA_InspectLoaders>
+  <MW_PA_InspectOutOfAmmo>Out of ammo</MW_PA_InspectOutOfAmmo>
+  <MW_PA_AmmoGizmoTip>{0} / {1} rounds.\n\nLoaders reload this mount when its ammo drops to {2}% or less. Drag the marker to change that. Anyone doing hauling work reloads it once it's empty.</MW_PA_AmmoGizmoTip>
+  <MW_PA_GunnerNoAmmo>{PAWN_labelShort} has no {AMMO} to reload {MOUNT_label}. Build an ammo station or keep ammo packs in storage.</MW_PA_GunnerNoAmmo>
+  <MW_PA_NoAmmoSource>no {0} station or packs available</MW_PA_NoAmmoSource>
+  <MW_PA_ReloadMount>Reload {0}</MW_PA_ReloadMount>
+  <MW_PA_NoPath>no path</MW_PA_NoPath>
+  <MW_PA_AlreadyReloading>someone is already reloading it</MW_PA_AlreadyReloading>
+
+</LanguageData>

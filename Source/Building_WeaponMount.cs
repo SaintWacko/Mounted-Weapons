@@ -81,6 +81,7 @@ namespace MountedWeapons
 
         public override LocalTargetInfo TryFindNewTarget()
         {
+            if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return LocalTargetInfo.Invalid;
             if (FiringArc.Unlimited(Arc) || !HasWeapon) return base.TryFindNewTarget();
             // Same search as the base, with the arc added to its validator. The base's
             // validator is private, so its rules are repeated in IsValidMountTarget.
@@ -217,6 +218,10 @@ namespace MountedWeapons
             {
                 pendingWeapon = null;
             }
+            if (Spawned)
+            {
+                MountAmmoHandler.Active?.MountTick(this);
+            }
         }
 
         public bool PendingWeaponStillValid()
@@ -316,6 +321,13 @@ namespace MountedWeapons
             // warmup; the call that arrives when that warmup ends fires. The two-tick
             // window stops a stale fireReadyTick (warmup cancelled when the gunner
             // left) from firing instantly later.
+            if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this))
+            {
+                // Keeps any forced target, so the mount picks it up again once reloaded.
+                burstWarmupTicksLeft = 0;
+                fireReadyTick = -1;
+                return;
+            }
             int now = Find.TickManager.TicksGame;
             if (fireReadyTick >= 0 && now >= fireReadyTick && now <= fireReadyTick + 2)
             {
@@ -546,6 +558,11 @@ namespace MountedWeapons
             {
                 sb.AppendLine("MW_InspectMounted".Translate(gun.LabelCap));
                 sb.AppendLine("MW_InspectRange".Translate(AttackVerb.verbProps.range.ToString("F1"), Ext.rangeMultiplier.ToStringPercent()));
+                string ammoLine = MountAmmoHandler.Active?.InspectLine(this);
+                if (!ammoLine.NullOrEmpty())
+                {
+                    sb.AppendLine(ammoLine);
+                }
             }
             else
             {
@@ -569,6 +586,14 @@ namespace MountedWeapons
                 yield return gizmo;
             }
             if (Faction != Faction.OfPlayer) yield break;
+
+            if (MountAmmoHandler.Active != null)
+            {
+                foreach (Gizmo gizmo in MountAmmoHandler.Active.Gizmos(this))
+                {
+                    yield return gizmo;
+                }
+            }
 
             yield return new Command_Action
             {

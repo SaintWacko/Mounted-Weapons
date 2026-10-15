@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- net48 to match ProgressionAmmunition.dll; RimWorld's Mono runs either. -->
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
+    <!-- ProgressionAmmunition.dll is built for net48; without this MSBuild drops the
+         reference and every type from it fails to resolve. RimWorld's Mono runs both. -->
+    <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
     <AssemblyName>MountedWeapons.ProgressionAmmunition</AssemblyName>
     <RootNamespace>MountedWeapons.Ammo</RootNamespace>
     <OutputPath>..\..\..\Compat\ProgressionAmmunition\Assemblies\</OutputPath>

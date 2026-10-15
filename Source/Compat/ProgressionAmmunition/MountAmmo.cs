@@ -77,13 +77,13 @@ namespace MountedWeapons.Ammo
         public static bool IsLoader(Pawn pawn, Building_WeaponMount mount)
         {
             CompMountLoaders loaders = mount.GetComp<CompMountLoaders>();
-            return loaders != null && loaders.AssignedPawnsForReading.Contains(pawn);
+            return loaders != null && loaders.Loaders.Contains(pawn);
         }
 
         public static bool HasLoaders(Building_WeaponMount mount)
         {
             CompMountLoaders loaders = mount.GetComp<CompMountLoaders>();
-            return loaders != null && loaders.AssignedPawnsForReading.Count > 0;
+            return loaders != null && loaders.Loaders.Count > 0;
         }
 
         /// <summary>

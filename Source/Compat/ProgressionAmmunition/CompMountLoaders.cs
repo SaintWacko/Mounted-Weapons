@@ -55,9 +55,30 @@ namespace MountedWeapons.Ammo
             return pawn != null && !pawn.Dead && pawn.Spawned && pawn.Map == parent.Map;
         }
 
+        /// <summary>
+        /// The current loaders. Vanilla only clears an assignment for beds and the like (via
+        /// Pawn_Ownership), so a loader who died, left or changed faction is dropped here,
+        /// on read. A backwards loop, since this runs inside the work giver's ShouldSkip.
+        /// </summary>
+        public List<Pawn> Loaders
+        {
+            get
+            {
+                for (int i = assignedPawns.Count - 1; i >= 0; i--)
+                {
+                    Pawn p = assignedPawns[i];
+                    if (p == null || p.Dead || p.Destroyed || p.Faction != parent.Faction)
+                    {
+                        assignedPawns.RemoveAt(i);
+                    }
+                }
+                return assignedPawns;
+            }
+        }
+
         public override string CompInspectStringExtra()
         {
-            if (!ProgressionAmmunitionMod.Enabled || assignedPawns.Count == 0) return null;
+            if (!ProgressionAmmunitionMod.Enabled || Loaders.Count == 0) return null;
             return "MW_PA_InspectLoaders".Translate(assignedPawns.Select(p => p.LabelShort).ToCommaList());
         }
 

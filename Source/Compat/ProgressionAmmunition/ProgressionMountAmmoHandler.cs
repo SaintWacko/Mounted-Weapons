@@ -33,7 +33,9 @@ namespace MountedWeapons.Ammo
             if (!MountAmmo.UsesAmmo(mount, out CompAmmo comp) || !comp.IsOutOfAmmo) return;
 
             int now = Find.TickManager.TicksGame;
-            if (nextGunnerTry.TryGetValue(mount.thingIDNumber, out int next) && now < next) return;
+            // The span check matters after loading an earlier save: thing IDs repeat but the
+            // clock goes back, and a stored tick far in the future would block the gunner.
+            if (nextGunnerTry.TryGetValue(mount.thingIDNumber, out int next) && now < next && next - now <= RetryTicks) return;
             nextGunnerTry[mount.thingIDNumber] = now + RetryTicks;
 
             // Someone else (a loader or hauler) is already bringing ammo.
@@ -42,7 +44,7 @@ namespace MountedWeapons.Ammo
             if (!MountAmmo.TryFindSource(gunner, comp, out Thing source))
             {
                 if (mount.Faction == Faction.OfPlayer
-                    && (!nextMessage.TryGetValue(mount.thingIDNumber, out int msg) || now >= msg))
+                    && (!nextMessage.TryGetValue(mount.thingIDNumber, out int msg) || now >= msg || msg - now > MessageTicks))
                 {
                     nextMessage[mount.thingIDNumber] = now + MessageTicks;
                     Messages.Message("MW_PA_GunnerNoAmmo".Translate(gunner.Named("PAWN"), mount.Named("MOUNT"),
@@ -70,6 +72,22 @@ namespace MountedWeapons.Ammo
     }
 
     /// <summary>
+    /// An empty mount's verb is unavailable. Verb.TryCastNextBurstShot checks Available()
+    /// before every shot, so this also ends a burst when the last round goes out mid-burst.
+    /// </summary>
+    [HarmonyPatch(typeof(Verb_LaunchProjectile), nameof(Verb_LaunchProjectile.Available))]
+    public static class Verb_LaunchProjectile_Available_MountAmmo
+    {
+        public static void Postfix(Verb_LaunchProjectile __instance, ref bool __result)
+        {
+            if (__result && __instance.caster is Building_WeaponMount mount && MountAmmo.OutOfAmmo(mount))
+            {
+                __result = false;
+            }
+        }
+    }
+
+    /// <summary>
     /// Counts a mount's shots. Progression: Ammunition patches the same method but only
     /// acts when a pawn is the caster; on a mount the building is, so its patch passes
     /// through and this one does the counting. Same scope as theirs: projectile verbs only.
@@ -77,17 +95,6 @@ namespace MountedWeapons.Ammo
     [HarmonyPatch(typeof(Verb_LaunchProjectile), "TryCastShot")]
     public static class Verb_LaunchProjectile_TryCastShot_MountAmmo
     {
-        public static bool Prefix(Verb_LaunchProjectile __instance, ref bool __result)
-        {
-            if (__instance.caster is Building_WeaponMount mount && MountAmmo.OutOfAmmo(mount))
-            {
-                // Ends the burst when the last round went out mid-burst.
-                __result = false;
-                return false;
-            }
-            return true;
-        }
-
         public static void Postfix(Verb_LaunchProjectile __instance, bool __result)
         {
             if (!__result || !(__instance.caster is Building_WeaponMount mount)) return;

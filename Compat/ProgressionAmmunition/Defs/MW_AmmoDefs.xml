@@ -22,6 +22,9 @@
     <gerund>reloading</gerund>
     <!-- Above refuelling (140) and installing weapons (135): an empty gun matters more. -->
     <priorityInType>145</priorityInType>
+    <requiredCapacities>
+      <li>Manipulation</li>
+    </requiredCapacities>
   </WorkGiverDef>
 
 </Defs>

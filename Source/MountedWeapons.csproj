@@ -55,6 +55,6 @@
   -->
   <Target Name="BuildCompatProjects" AfterTargets="Build">
     <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Restore" Properties="MWRestore=true" />
-    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Build" />
+    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
   </Target>
 </Project>

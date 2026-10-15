@@ -422,8 +422,8 @@ namespace MountedWeapons
             {
                 pivot -= ArtCentroidWorld(aim);
             }
-            PawnRenderUtility.DrawEquipmentAiming(gun, pivot, aim);
             DrawShield(mountPoint, aim);
+            PawnRenderUtility.DrawEquipmentAiming(gun, pivot, aim);
         }
 
         /// <summary>

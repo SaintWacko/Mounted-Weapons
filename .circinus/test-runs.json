@@ -131,6 +131,27 @@
       "reason": "game-closed",
       "errorClasses": 4,
       "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791954758058,
+      "endedAt": 1791954913418,
+      "reason": "game-closed",
+      "errorClasses": 2,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1791955664904,
+      "endedAt": 1791955904320,
+      "reason": "game-closed",
+      "errorClasses": 19,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
+    },
+    {
+      "startedAt": 1792080586586,
+      "endedAt": 1792080832820,
+      "reason": "game-closed",
+      "errorClasses": 19,
+      "conversationId": "01a10daa-0bb4-747c-aab3-f70b7dee25ee"
     }
   ]
 }

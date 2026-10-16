@@ -101,12 +101,17 @@ namespace MountedWeapons.Ammo
         /// Perspective Shift: a left click by the inhabited pawn runs work givers with forced on
         /// before it tries the float menu, so a forced reload of anything below full would
         /// stop that click ever manning the mount. That click reloads only at or under the
-        /// ammo bar's marker; above it, the click falls through to Man.
+        /// ammo bar's marker; above it, the click falls through to Man. A marker left at its
+        /// 100% default would make every partly spent mount reload on click, so for this
+        /// click a full marker means "reload only when empty".
         /// </summary>
         public static bool WantsReloadFrom(Pawn pawn, Building_WeaponMount mount, CompAmmo comp, bool forced)
         {
             if (comp.CurAmmo >= comp.MaxAmmo) return false;
-            if (forced && ModCompat.IsAvatarLeftClick(pawn)) return BelowThreshold(comp);
+            if (forced && ModCompat.IsAvatarLeftClick(pawn))
+            {
+                return comp.autoReloadThreshold >= 1f ? comp.IsOutOfAmmo : BelowThreshold(comp);
+            }
             if (forced || OpenToAnyHauler(mount, comp)) return true;
             return BelowThreshold(comp) && IsLoader(pawn, mount);
         }

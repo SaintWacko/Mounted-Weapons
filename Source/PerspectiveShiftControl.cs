@@ -198,8 +198,10 @@ namespace MountedWeapons
 
         public static MethodBase TargetMethod() => AvatarMountControl.Target("UpdateCursorAndReticle", typeof(void), typeof(bool), typeof(bool));
 
-        public static bool Prefix(object __instance, bool mouseOverGizmo, bool mouseOverUI)
+        // Positional (__0, __1): a renamed parameter must not make Harmony throw inside PatchAll.
+        public static bool Prefix(object __instance, bool __0, bool __1)
         {
+            bool mouseOverGizmo = __0, mouseOverUI = __1;
             Pawn pawn = ModCompat.AvatarPawnOf(__instance);
             if (pawn == null || pawn.InMentalState) return true;
             Building_WeaponMount mount = AvatarMountControl.ControlledMount(pawn);

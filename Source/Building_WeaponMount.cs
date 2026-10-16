@@ -524,7 +524,7 @@ namespace MountedWeapons
         private bool AvatarCanHit(LocalTargetInfo target)
         {
             if (!HasWeapon || !target.IsValid || !InArc(target)) return false;
-            // Base Tick's own conditions for firing: power, flick, breakdown, stun.
+            // Base Tick's own conditions for firing: power and the other comps Active reads, and stun.
             if (!Active || IsStunned) return false;
             if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return false;
             if (!AttackVerb.Available()) return false;

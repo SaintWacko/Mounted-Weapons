@@ -25,7 +25,8 @@ namespace MountedWeapons.Ammo
         public static IEnumerable<Gizmo> Postfix(IEnumerable<Gizmo> __result, Pawn_EquipmentTracker __instance)
         {
             Building_WeaponMount mount = AvatarMountControl.ControlledMount(__instance.pawn);
-            if (mount == null || !MountAmmo.UsesAmmo(mount, out CompAmmo mountComp))
+            // Player mounts only, as on the mount itself: the bar's marker is a player setting.
+            if (mount == null || mount.Faction != Faction.OfPlayer || !MountAmmo.UsesAmmo(mount, out CompAmmo mountComp))
             {
                 foreach (Gizmo g in __result) yield return g;
                 yield break;

@@ -31,6 +31,9 @@ namespace MountedWeapons.Ammo
 
         public override float GetWidth(float maxWidth) => Width;
 
+        // The mount and its gunner selected together both offer this bar; draw it once.
+        public override bool GroupsWith(Gizmo other) => other is Gizmo_MountAmmo o && o.comp == comp;
+
         public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
         {
             Rect rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);

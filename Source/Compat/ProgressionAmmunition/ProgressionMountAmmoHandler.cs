@@ -60,11 +60,13 @@ namespace MountedWeapons.Ammo
         }
 
         /// <summary>
-        /// A gunner reloading the mount they man goes back to manning it afterwards, as in
-        /// MountTick. Anyone else gets an ordinary ordered job.
+        /// The gunner reloads the mount they man and goes back to manning it afterwards, as
+        /// in MountTick. Only the mount's own gunner: anyone else reloads through the work
+        /// giver or the drafted float menu, which check reach and forbidden.
         /// </summary>
         public override void OrderReload(Pawn pawn, Building_WeaponMount mount)
         {
+            if (pawn.CurJobDef != JobDefOf.ManTurret || pawn.CurJob.targetA.Thing != mount) return;
             if (!ProgressionAmmunitionMod.Enabled || !MountAmmo.UsesAmmo(mount, out CompAmmo comp) || comp.CurAmmo >= comp.MaxAmmo) return;
             string label = "MW_PA_ReloadMount".Translate(mount.LabelShort);
             if (!pawn.CanReserve(mount, 1, -1, AmmoDefOf.MW_MountReload))
@@ -79,14 +81,8 @@ namespace MountedWeapons.Ammo
                 return;
             }
             Job job = MountAmmo.MakeReloadJob(mount, source);
-            if (pawn.CurJobDef == JobDefOf.ManTurret && pawn.CurJob.targetA.Thing == mount)
-            {
-                pawn.jobs.StartJob(job, JobCondition.InterruptForced, resumeCurJobAfterwards: true);
-            }
-            else
-            {
-                pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-            }
+            job.playerForced = true;
+            pawn.jobs.StartJob(job, JobCondition.InterruptForced, resumeCurJobAfterwards: true);
         }
 
         public override string InspectLine(Building_WeaponMount mount)

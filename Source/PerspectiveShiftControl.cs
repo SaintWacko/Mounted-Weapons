@@ -34,11 +34,14 @@ namespace MountedWeapons
         private static readonly HashSet<string> warned = new HashSet<string>();
 
         /// <summary>The private Avatar method to patch, or null when it can't be used.</summary>
-        public static MethodBase Target(string method, params System.Type[] args)
+        public static MethodBase Target(string method, System.Type returns, params System.Type[] args)
         {
             System.Type type = GenTypes.GetTypeInAnyAssembly(AvatarType);
             if (type == null) return null;
             MethodInfo found = AccessTools.Method(type, method, args);
+            // A changed return type would make Harmony throw inside PatchAll (a bool
+            // __result on a void method), taking the mod's other patches with it.
+            if (found != null && found.ReturnType != returns) found = null;
             if (found == null && warned.Add(method))
             {
                 Log.Warning("[Mounted Weapons] Perspective Shift is loaded but Avatar." + method
@@ -112,7 +115,7 @@ namespace MountedWeapons
                 return;
             }
             Cursor.visible = false;
-            if (Event.current.type != EventType.Repaint) return;
+            if (Event.current == null || Event.current.type != EventType.Repaint) return;
 
             mount.AimAvatarAt(UI.MouseMapPosition());
             Texture2D tex;
@@ -156,7 +159,7 @@ namespace MountedWeapons
     {
         public static bool Prepare() => TargetMethod() != null;
 
-        public static MethodBase TargetMethod() => AvatarMountControl.Target("HandleFiring");
+        public static MethodBase TargetMethod() => AvatarMountControl.Target("HandleFiring", typeof(void));
 
         public static bool Prefix(object __instance)
         {
@@ -174,7 +177,7 @@ namespace MountedWeapons
     {
         public static bool Prepare() => TargetMethod() != null;
 
-        public static MethodBase TargetMethod() => AvatarMountControl.Target("HandleLeftClick");
+        public static MethodBase TargetMethod() => AvatarMountControl.Target("HandleLeftClick", typeof(bool));
 
         public static bool Prefix(object __instance, ref bool __result)
         {
@@ -193,7 +196,7 @@ namespace MountedWeapons
     {
         public static bool Prepare() => TargetMethod() != null;
 
-        public static MethodBase TargetMethod() => AvatarMountControl.Target("UpdateCursorAndReticle", typeof(bool), typeof(bool));
+        public static MethodBase TargetMethod() => AvatarMountControl.Target("UpdateCursorAndReticle", typeof(void), typeof(bool), typeof(bool));
 
         public static bool Prefix(object __instance, bool mouseOverGizmo, bool mouseOverUI)
         {

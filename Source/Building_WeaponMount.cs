@@ -218,8 +218,9 @@ namespace MountedWeapons
             {
                 avatarControlledLast = avatar;
                 avatarAim = -1f;
-                // An automatic aim in progress when the player takes over must not fire.
-                if (avatar) ResetTargeting();
+                // An automatic aim in progress when the player takes over must not fire, and
+                // neither must the player's aim once they let go.
+                ResetTargeting();
             }
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
@@ -523,6 +524,8 @@ namespace MountedWeapons
         private bool AvatarCanHit(LocalTargetInfo target)
         {
             if (!HasWeapon || !target.IsValid || !InArc(target)) return false;
+            // Base Tick's own conditions for firing: power, flick, breakdown, stun.
+            if (!Active || IsStunned) return false;
             if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return false;
             if (!AttackVerb.Available()) return false;
             if (AttackVerb.ProjectileFliesOverhead() && Map.roofGrid.Roofed(Position)) return false;

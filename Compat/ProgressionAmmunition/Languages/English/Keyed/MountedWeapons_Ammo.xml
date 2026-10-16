@@ -6,7 +6,7 @@
   <MW_PA_LoaderCannotHaul>{PAWN_labelShort} can't do hauling work.</MW_PA_LoaderCannotHaul>
   <MW_PA_InspectLoaders>Loaders: {0}</MW_PA_InspectLoaders>
   <MW_PA_InspectOutOfAmmo>Out of ammo</MW_PA_InspectOutOfAmmo>
-  <MW_PA_AmmoGizmoTip>{0} / {1} rounds.\n\nLoaders reload this mount when its ammo drops to {2}% or less. Drag the marker to change that. Anyone doing hauling work reloads it once it's empty.</MW_PA_AmmoGizmoTip>
+  <MW_PA_AmmoGizmoTip>{0} / {1} rounds.\n\nLoaders reload this mount when its ammo drops to {2}% or less. Drag the marker to change that. Once it's empty, its gunner reloads a manned mount, and anyone doing hauling work reloads an automated one.</MW_PA_AmmoGizmoTip>
   <MW_PA_GunnerNoAmmo>{PAWN_labelShort} has no {AMMO} to reload {MOUNT_label}. Build an ammo station or keep ammo packs in storage.</MW_PA_GunnerNoAmmo>
   <MW_PA_NoAmmoSource>no {0} station or packs available</MW_PA_NoAmmoSource>
   <MW_PA_ReloadMount>Reload {0}</MW_PA_ReloadMount>

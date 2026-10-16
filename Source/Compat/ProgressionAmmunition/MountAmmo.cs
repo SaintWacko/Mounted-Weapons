@@ -59,6 +59,12 @@ namespace MountedWeapons.Ammo
             return comp != null;
         }
 
+        /// <summary>An empty automated mount: the general hauling job.</summary>
+        public static bool OpenToAnyHauler(Building_WeaponMount mount, CompAmmo comp)
+        {
+            return comp.IsOutOfAmmo && mount.mannableComp == null;
+        }
+
         public static bool OutOfAmmo(Building_WeaponMount mount)
         {
             return UsesAmmo(mount, out CompAmmo comp) && comp.IsOutOfAmmo;
@@ -87,13 +93,15 @@ namespace MountedWeapons.Ammo
         }
 
         /// <summary>
-        /// Anyone hauling reloads an empty mount. A loader also tops up their own mounts
-        /// at the threshold. A player order (forced) reloads anything below full.
+        /// Anyone hauling reloads an empty automated mount. An empty manned mount is left to
+        /// its loaders and its gunner (who reloads from MountTick): the gunner is standing
+        /// next to it, while a random hauler might be across the map. A loader also tops up
+        /// their own mounts at the threshold. A player order (forced) reloads anything below full.
         /// </summary>
         public static bool WantsReloadFrom(Pawn pawn, Building_WeaponMount mount, CompAmmo comp, bool forced)
         {
             if (comp.CurAmmo >= comp.MaxAmmo) return false;
-            if (comp.IsOutOfAmmo || forced) return true;
+            if (forced || OpenToAnyHauler(mount, comp)) return true;
             return BelowThreshold(comp) && IsLoader(pawn, mount);
         }
 

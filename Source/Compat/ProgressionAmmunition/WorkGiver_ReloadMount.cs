@@ -7,7 +7,8 @@ using Verse.AI;
 namespace MountedWeapons.Ammo
 {
     /// <summary>
-    /// Hauling work: reload empty mounts, and loaders keep their own mounts topped up.
+    /// Hauling work: reload empty automated mounts, and loaders keep their own mounts topped up.
+    /// An empty manned mount without loaders is its gunner's job (ProgressionMountAmmoHandler.MountTick).
     /// Scans the map's registered mounts only; ShouldSkip makes it a few integer
     /// comparisons per mount when none of them need anything, which is most of the time.
     /// </summary>
@@ -34,7 +35,7 @@ namespace MountedWeapons.Ammo
                 Building_WeaponMount mount = mounts[i];
                 if (mount.Faction != pawn.Faction || !MountAmmo.UsesAmmo(mount, out CompAmmo comp)) continue;
                 if (comp.CurAmmo >= comp.MaxAmmo) continue;
-                if (forced || comp.IsOutOfAmmo || (MountAmmo.BelowThreshold(comp) && MountAmmo.HasLoaders(mount))) return false;
+                if (forced || MountAmmo.OpenToAnyHauler(mount, comp) || (MountAmmo.BelowThreshold(comp) && MountAmmo.HasLoaders(mount))) return false;
             }
             return true;
         }

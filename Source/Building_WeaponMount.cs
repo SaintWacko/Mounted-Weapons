@@ -550,6 +550,23 @@ namespace MountedWeapons
 
         // ---------------------------------------------------------------- destruction
 
+        /// <summary>
+        /// Called just before the mount is packed into a minified item: drops the weapon
+        /// beside it and forgets any weapon waiting to be installed. A minified mount sits
+        /// in storage or a caravan, where nobody could take the weapon off it, and its
+        /// Destroy has no map to drop the weapon on.
+        /// </summary>
+        public void Notify_Minifying()
+        {
+            pendingWeapon = null;
+            if (!Spawned) return;
+            Thing weapon = RemoveWeapon();
+            if (weapon != null)
+            {
+                GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near);
+            }
+        }
+
         public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
         {
             Map map = Map;

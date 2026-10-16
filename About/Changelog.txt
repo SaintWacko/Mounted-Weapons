@@ -1,0 +1,18 @@
+Changelog
+Mounted Weapons
+
+1.0.0 (unreleased)
+Added
+* Weapon mounts that hold a real ranged weapon and fire it in place with more range and accuracy. A gunner's Shooting skill counts in full.
+* Manned mounts fire within a 120 degree arc around the way they face. The arc is set in the mod settings.
+* Automated mounts, one building per core tier, when Biotech is active. Deconstructing one returns its core; when one is destroyed the core is lost at a chance set in the settings, 50% by default.
+* Mounts can fire heavy and mech weapons from other mods that pawns cannot equip.
+* Gun shields drawn over manned mounts.
+* Progression: Ammunition support. Mounts use and reload ammo from stations, carried packs and stored packs, with assignable loaders and a reload marker on the ammo bar. A pawn manning a mount shows the mount's ammo bar in place of their own weapon's.
+* Progression: Education support. A pawn who cannot equip the mounted weapon cannot man the mount.
+* Perspective Shift support. An inhabited gunner aims the mount with the mouse, fires on click, and reloads by clicking the mount.
+* As Above So Below II support. Mounts with a limited arc can fire at targets on other levels.
+
+Changed
+* Mounts accept no Neolithic weapons except crossbows. A crossbow is recognised by "crossbow" in its defName, so a modded crossbow named otherwise is refused.
+* Single use launchers, grenades, biocoded weapons and turret guns cannot be mounted.

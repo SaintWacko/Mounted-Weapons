@@ -78,7 +78,10 @@ namespace MountedWeapons
         public bool InArc(LocalTargetInfo targ)
         {
             if (!targ.IsValid) return true;
+            if (FiringArc.Unlimited(Arc)) return true;
             Vector3 point = targ.HasThing ? targ.Thing.DrawPos : targ.Cell.ToVector3Shifted();
+            // A target on another As above, So below II level is tested where it sits in this level.
+            point = ModCompat.ToBandOf(Map, Position, targ.Cell, point);
             return FiringArc.Contains(DrawPos, Rotation, Arc, point);
         }
 
@@ -221,9 +224,48 @@ namespace MountedWeapons
             {
                 pendingWeapon = null;
             }
+            if (Spawned && this.IsHashIntervalTick(60))
+            {
+                CheckGunnerCanFire();
+            }
             if (Spawned)
             {
                 MountAmmoHandler.Active?.MountTick(this);
+            }
+        }
+
+        /// <summary>
+        /// The Man option is greyed out for a pawn who can't fire the weapon, but a weapon
+        /// can be swapped while someone is manning, and other mods start the job their own
+        /// way. This catches both.
+        /// </summary>
+        private void CheckGunnerCanFire()
+        {
+            Pawn gunner = Gunner;
+            if (gunner == null || !HasWeapon || gunner.CurJobDef != JobDefOf.ManTurret) return;
+            string reason = ModCompat.CannotFireReason(gunner, gun);
+            if (reason == null) return;
+            gunner.jobs.EndCurrentJob(JobCondition.InterruptForced);
+            if (Faction == Faction.OfPlayer)
+            {
+                Messages.Message("MW_GunnerCannotFire".Translate(gunner.Named("PAWN"), gun.Named("WEAPON"), reason.Named("REASON")),
+                    this, MessageTypeDefOf.RejectInput, historical: false);
+            }
+        }
+
+        public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
+        {
+            string reason = HasWeapon && IsManned ? ModCompat.CannotFireReason(selPawn, gun) : null;
+            // CompMannable's option, matched by its label: the comp offers no hook of its own.
+            string manLabel = reason != null ? "OrderManThing".Translate(LabelShort, this).ToString() : null;
+            foreach (FloatMenuOption option in base.GetFloatMenuOptions(selPawn))
+            {
+                if (reason != null && option.Label == manLabel)
+                {
+                    yield return new FloatMenuOption("CannotManThing".Translate(LabelShort, this) + " (" + reason + ")", null);
+                    continue;
+                }
+                yield return option;
             }
         }
 

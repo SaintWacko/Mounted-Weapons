@@ -10,6 +10,8 @@
   <MW_NoMountableWeapons>No mountable weapons on this map</MW_NoMountableWeapons>
   <MW_WeaponClaimed>{0} (chosen for {1})</MW_WeaponClaimed>
   <MW_TargetOutsideArc>Target is outside the mount's firing arc.</MW_TargetOutsideArc>
+  <!-- Progression: Education. {REASON} is that mod's own text, e.g. "Colonist must be taught firearm proficiency." -->
+  <MW_GunnerCannotFire>{PAWN_labelShort} stopped manning: {PAWN_pronoun} can't fire the {WEAPON_label}. {REASON}</MW_GunnerCannotFire>
 
   <MW_InspectMounted>Mounted: {0}</MW_InspectMounted>
   <MW_InspectRange>Range: {0} ({1} of normal)</MW_InspectRange>

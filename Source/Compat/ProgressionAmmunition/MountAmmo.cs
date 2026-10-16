@@ -97,10 +97,16 @@ namespace MountedWeapons.Ammo
         /// its loaders and its gunner (who reloads from MountTick): the gunner is standing
         /// next to it, while a random hauler might be across the map. A loader also tops up
         /// their own mounts at the threshold. A player order (forced) reloads anything below full.
+        ///
+        /// Perspective Shift: a left click by the inhabited pawn runs work givers with forced on
+        /// before it tries the float menu, so a forced reload of anything below full would
+        /// stop that click ever manning the mount. That click reloads only at or under the
+        /// ammo bar's marker; above it, the click falls through to Man.
         /// </summary>
         public static bool WantsReloadFrom(Pawn pawn, Building_WeaponMount mount, CompAmmo comp, bool forced)
         {
             if (comp.CurAmmo >= comp.MaxAmmo) return false;
+            if (forced && ModCompat.IsAvatarLeftClick(pawn)) return BelowThreshold(comp);
             if (forced || OpenToAnyHauler(mount, comp)) return true;
             return BelowThreshold(comp) && IsLoader(pawn, mount);
         }

@@ -24,12 +24,15 @@ namespace MountedWeapons.Ammo
         /// manning, the way vanilla mortar crews fetch shells. This ignores work settings,
         /// like the mortar case, and works while drafted: the reload job is started
         /// directly and the manning job is suspended behind it.
+        ///
+        /// Not for Perspective Shift's inhabited pawn: the player is steering them, so they
+        /// reload when the player clicks the mount, as that mod does for mortar shells.
         /// </summary>
         public override void MountTick(Building_WeaponMount mount)
         {
             if (!mount.IsHashIntervalTick(GunnerCheckInterval)) return;
             Pawn gunner = mount.Gunner;
-            if (gunner == null || gunner.CurJobDef != JobDefOf.ManTurret) return;
+            if (gunner == null || gunner.CurJobDef != JobDefOf.ManTurret || ModCompat.IsAvatar(gunner)) return;
             if (!MountAmmo.UsesAmmo(mount, out CompAmmo comp) || !comp.IsOutOfAmmo) return;
 
             int now = Find.TickManager.TicksGame;

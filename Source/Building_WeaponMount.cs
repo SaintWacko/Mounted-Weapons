@@ -64,10 +64,12 @@ namespace MountedWeapons
         // draws the real weapon instead (DrawAt), so the top is drawn clear.
         public override Material TurretTopMaterial => BaseContent.ClearMat;
 
+        // While Perspective Shift's inhabited pawn mans the mount, the player aims with the
+        // mouse, so there is no forced target; the base Tick clears any it had.
         protected override bool CanSetForcedTarget =>
-            HasWeapon && (base.CanSetForcedTarget || (Ext.allowForcedTarget && Faction == Faction.OfPlayer));
+            HasWeapon && !AvatarControlled && (base.CanSetForcedTarget || (Ext.allowForcedTarget && Faction == Faction.OfPlayer));
 
-        protected override bool HideForceTargetGizmo => !HasWeapon;
+        protected override bool HideForceTargetGizmo => !HasWeapon || AvatarControlled;
 
         private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
@@ -87,6 +89,8 @@ namespace MountedWeapons
 
         public override LocalTargetInfo TryFindNewTarget()
         {
+            // The inhabited pawn fires only when the player clicks (TryAvatarFire).
+            if (AvatarControlled) return LocalTargetInfo.Invalid;
             if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return LocalTargetInfo.Invalid;
             if (FiringArc.Unlimited(Arc) || !HasWeapon) return base.TryFindNewTarget();
             // Same search as the base, with the arc added to its validator. The base's
@@ -209,12 +213,25 @@ namespace MountedWeapons
 
         protected override void Tick()
         {
+            bool avatar = AvatarControlled;
+            if (avatar != avatarControlledLast)
+            {
+                avatarControlledLast = avatar;
+                avatarAim = -1f;
+                // An automatic aim in progress when the player takes over must not fire.
+                if (avatar) ResetTargeting();
+            }
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
                 // A forced target walked out of the arc.
                 ResetTargeting();
             }
             base.Tick();
+            if (avatar && avatarAim >= 0f && !AvatarShooting)
+            {
+                // TurretTopTick turns toward the last target or sweeps idly; the player's aim wins.
+                Top.CurRotation = avatarAim;
+            }
             if (Spawned && !FiringArc.Unlimited(Arc))
             {
                 // Keeps idle sweeps, and the turn toward any target, inside the arc.
@@ -427,6 +444,9 @@ namespace MountedWeapons
 
         private int WarmupTicks()
         {
+            // Perspective Shift drops the aiming delay for the weapon its avatar holds;
+            // the same setting covers the mount the avatar is firing.
+            if (ModCompat.AvatarSkipsAiming && AvatarControlled) return 0;
             float seconds = AttackVerb.verbProps.warmupTime * Ext.warmupFactor;
             Pawn gunner = Gunner;
             if (gunner != null)
@@ -457,6 +477,72 @@ namespace MountedWeapons
             float xp = target.HostileTo(gunner) ? 170f : 20f;
             xp *= AttackVerb.verbProps.AdjustedFullCycleTime(AttackVerb, gunner);
             gunner.skills.Learn(SkillDefOf.Shooting, xp);
+        }
+
+        // ---------------------------------------------------------------- Perspective Shift control
+
+        public enum AvatarAimState { Ready, NoShot, Aiming, Cooldown }
+
+        // The player's aim from the mouse, already held inside the arc; -1 for none.
+        // Not saved: it is set again on the next frame the player is in control.
+        private float avatarAim = -1f;
+        private bool avatarControlledLast;
+
+        /// <summary>Manned right now by the pawn the player inhabits in Perspective Shift.</summary>
+        public bool AvatarControlled
+        {
+            get
+            {
+                Pawn gunner = Gunner;
+                return gunner != null && HasWeapon && ModCompat.IsAvatar(gunner);
+            }
+        }
+
+        private bool AvatarShooting => burstWarmupTicksLeft > 0 || AttackVerb.state == VerbState.Bursting;
+
+        /// <summary>Turns the weapon toward a map point, stopping at the edge of the arc.</summary>
+        public void AimAvatarAt(Vector3 point)
+        {
+            Vector3 dir = point - DrawPos;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f) return;
+            float angle = dir.AngleFlat();
+            if (!FiringArc.Unlimited(Arc)) angle = FiringArc.Clamp(Rotation, Arc, angle);
+            avatarAim = angle;
+            if (!AvatarShooting) Top.CurRotation = angle;
+        }
+
+        /// <summary>What Perspective Shift's reticle should show for this target.</summary>
+        public AvatarAimState AvatarStateFor(LocalTargetInfo target)
+        {
+            if (burstWarmupTicksLeft > 0) return AvatarAimState.Aiming;
+            if (AttackVerb.state == VerbState.Bursting || burstCooldownTicksLeft > 0) return AvatarAimState.Cooldown;
+            return AvatarCanHit(target) ? AvatarAimState.Ready : AvatarAimState.NoShot;
+        }
+
+        private bool AvatarCanHit(LocalTargetInfo target)
+        {
+            if (!HasWeapon || !target.IsValid || !InArc(target)) return false;
+            if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return false;
+            if (!AttackVerb.Available()) return false;
+            if (AttackVerb.ProjectileFliesOverhead() && Map.roofGrid.Roofed(Position)) return false;
+            return AttackVerb.CanHitTarget(target);
+        }
+
+        /// <summary>
+        /// One burst at the player's target, through the normal BeginBurst so ammo, aiming
+        /// time, XP and the cooldown work as they do for any gunner. Returns false, doing
+        /// nothing, while aiming, firing or cooling down, so Perspective Shift's
+        /// hold-to-fire can call this every frame.
+        /// </summary>
+        public bool TryAvatarFire(LocalTargetInfo target)
+        {
+            if (!AvatarControlled || AvatarStateFor(target) != AvatarAimState.Ready) return false;
+            forcedTarget = LocalTargetInfo.Invalid;
+            currentTargetInt = target;
+            fireReadyTick = -1;
+            BeginBurst();
+            return true;
         }
 
         // ---------------------------------------------------------------- destruction

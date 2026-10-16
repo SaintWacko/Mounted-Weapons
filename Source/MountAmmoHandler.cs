@@ -24,5 +24,13 @@ namespace MountedWeapons
         public abstract string InspectLine(Building_WeaponMount mount);
 
         public abstract IEnumerable<Gizmo> Gizmos(Building_WeaponMount mount);
+
+        /// <summary>
+        /// The player told this pawn to reload the mount directly (Perspective Shift's
+        /// inhabited gunner clicking the mount it mans). Starts the job or says why not.
+        /// </summary>
+        public virtual void OrderReload(Pawn pawn, Building_WeaponMount mount)
+        {
+        }
     }
 }

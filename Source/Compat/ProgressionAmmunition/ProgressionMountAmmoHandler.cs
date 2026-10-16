@@ -59,6 +59,36 @@ namespace MountedWeapons.Ammo
                 resumeCurJobAfterwards: true);
         }
 
+        /// <summary>
+        /// A gunner reloading the mount they man goes back to manning it afterwards, as in
+        /// MountTick. Anyone else gets an ordinary ordered job.
+        /// </summary>
+        public override void OrderReload(Pawn pawn, Building_WeaponMount mount)
+        {
+            if (!ProgressionAmmunitionMod.Enabled || !MountAmmo.UsesAmmo(mount, out CompAmmo comp) || comp.CurAmmo >= comp.MaxAmmo) return;
+            string label = "MW_PA_ReloadMount".Translate(mount.LabelShort);
+            if (!pawn.CanReserve(mount, 1, -1, AmmoDefOf.MW_MountReload))
+            {
+                Messages.Message(label + ": " + "MW_PA_AlreadyReloading".Translate(), mount, MessageTypeDefOf.RejectInput, historical: false);
+                return;
+            }
+            if (!MountAmmo.TryFindSource(pawn, comp, out Thing source))
+            {
+                Messages.Message(label + ": " + "MW_PA_NoAmmoSource".Translate(comp.WeaponAmmoType.ToStringHuman()), mount,
+                    MessageTypeDefOf.RejectInput, historical: false);
+                return;
+            }
+            Job job = MountAmmo.MakeReloadJob(mount, source);
+            if (pawn.CurJobDef == JobDefOf.ManTurret && pawn.CurJob.targetA.Thing == mount)
+            {
+                pawn.jobs.StartJob(job, JobCondition.InterruptForced, resumeCurJobAfterwards: true);
+            }
+            else
+            {
+                pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+            }
+        }
+
         public override string InspectLine(Building_WeaponMount mount)
         {
             if (!MountAmmo.UsesAmmo(mount, out CompAmmo comp)) return null;

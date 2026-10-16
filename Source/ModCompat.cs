@@ -18,7 +18,8 @@ namespace MountedWeapons
     ///
     /// Perspective Shift (ferny.PerspectiveShift): the inhabited pawn ("avatar") is
     /// controlled by the player, so the ammo compat leaves reloading to the player's
-    /// clicks instead of sending the gunner off on its own.
+    /// clicks instead of sending the gunner off on its own, and PerspectiveShiftControl.cs
+    /// gives the player the mouse to aim and fire a mount the avatar mans.
     ///
     /// As above, So below II (astryl.AsAboveSoBelow2): stacks vertical levels ("bands")
     /// on one map at offset z coordinates. A target on another band is at a raw position
@@ -35,6 +36,15 @@ namespace MountedWeapons
         // Perspective Shift
         private static readonly Func<Pawn, bool> psIsAvatar;
         private static readonly Func<bool> psIsAvatarLeftClick;
+        // Mount control (PerspectiveShiftControl.cs): the avatar's pawn, two of its
+        // settings, its frozen-controls flag and its three reticle textures.
+        private static readonly Func<object, Pawn> psAvatarPawn;
+        private static readonly Func<bool> psSkipAiming;
+        private static readonly Func<bool> psCustomGizmosOff;
+        private static readonly Func<bool> psControlsFrozen;
+        private static readonly Func<Texture2D> psReticle;
+        private static readonly Func<Texture2D> psReticleNoLos;
+        private static readonly Func<Texture2D> psReticleCooldown;
 
         // As above, So below II
         private static readonly Func<Map, MapComponent> abCompOf;
@@ -62,6 +72,27 @@ namespace MountedWeapons
                     psIsAvatarLeftClick = Expression.Lambda<Func<bool>>(Expression.Field(null, leftClick)).Compile();
                 }
                 Report("Perspective Shift", psIsAvatar != null && psIsAvatarLeftClick != null);
+
+                FieldInfo pawnField = psAvatar.GetField("pawn", BindingFlags.Public | BindingFlags.Instance);
+                if (pawnField != null && pawnField.FieldType == typeof(Pawn))
+                {
+                    ParameterExpression avatar = Expression.Parameter(typeof(object), "avatar");
+                    psAvatarPawn = Expression.Lambda<Func<object, Pawn>>(
+                        Expression.Field(Expression.Convert(avatar, psAvatar), pawnField), avatar).Compile();
+                }
+                Type psMod = GenTypes.GetTypeInAnyAssembly("PerspectiveShift.PerspectiveShiftMod");
+                FieldInfo settings = psMod?.GetField("settings", BindingFlags.Public | BindingFlags.Static);
+                if (settings != null)
+                {
+                    psSkipAiming = SettingFlag(settings, "disableAimingDelay");
+                    psCustomGizmosOff = SettingFlag(settings, "disableCustomGizmos");
+                }
+                psControlsFrozen = StaticGetter<bool>(psState, "ControlsFrozen");
+                psReticle = StaticGetter<Texture2D>(psAvatar, "ReticleTex");
+                psReticleNoLos = StaticGetter<Texture2D>(psAvatar, "ReticleNoLOSTex");
+                psReticleCooldown = StaticGetter<Texture2D>(psAvatar, "ReticleCooldownTex");
+                Report("Perspective Shift (mount control)", psAvatarPawn != null && psSkipAiming != null && psCustomGizmosOff != null
+                    && psControlsFrozen != null && psReticle != null && psReticleNoLos != null && psReticleCooldown != null);
             }
 
             Type abBands = GenTypes.GetTypeInAnyAssembly("AsAboveSoBelow.ABBands");
@@ -102,6 +133,24 @@ namespace MountedWeapons
             }
         }
 
+        private static Func<T> StaticGetter<T>(Type type, string property)
+        {
+            MethodInfo getter = type.GetProperty(property, BindingFlags.Public | BindingFlags.Static)?.GetGetMethod();
+            if (getter == null || getter.ReturnType != typeof(T)) return null;
+            return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), getter);
+        }
+
+        /// <summary>A bool field on a static settings object, read as false while the object is null.</summary>
+        private static Func<bool> SettingFlag(FieldInfo settings, string name)
+        {
+            FieldInfo flag = settings.FieldType.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+            if (flag == null || flag.FieldType != typeof(bool)) return null;
+            Expression obj = Expression.Field(null, settings);
+            Expression body = Expression.Condition(Expression.Equal(obj, Expression.Constant(null, settings.FieldType)),
+                Expression.Constant(false), Expression.Field(obj, flag));
+            return Expression.Lambda<Func<bool>>(body).Compile();
+        }
+
         private static void Report(string mod, bool ok)
         {
             if (!ok)
@@ -134,6 +183,21 @@ namespace MountedWeapons
         /// with forced on for that click, ahead of the float menu.
         /// </summary>
         public static bool IsAvatarLeftClick(Pawn pawn) => psIsAvatarLeftClick != null && psIsAvatarLeftClick() && IsAvatar(pawn);
+
+        /// <summary>The pawn behind one of Perspective Shift's Avatar objects (a patch's __instance).</summary>
+        public static Pawn AvatarPawnOf(object avatar) => psAvatarPawn != null && avatar != null ? psAvatarPawn(avatar) : null;
+
+        /// <summary>Perspective Shift's "disable aiming delay" setting (on by default there).</summary>
+        public static bool AvatarSkipsAiming => psSkipAiming != null && psSkipAiming();
+
+        public static bool AvatarCustomGizmosOff => psCustomGizmosOff != null && psCustomGizmosOff();
+
+        /// <summary>Perspective Shift has the avatar's controls frozen (cutscenes, dialogs and the like).</summary>
+        public static bool AvatarControlsFrozen => psControlsFrozen != null && psControlsFrozen();
+
+        public static Texture2D AvatarReticle => psReticle?.Invoke();
+        public static Texture2D AvatarReticleNoShot => psReticleNoLos?.Invoke();
+        public static Texture2D AvatarReticleCooldown => psReticleCooldown?.Invoke();
 
         // ---------------------------------------------------------------- As above, So below II
 

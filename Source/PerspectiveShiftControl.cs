@@ -50,7 +50,10 @@ namespace MountedWeapons
             return found;
         }
 
-        /// <summary>The mount this pawn is manning with a weapon on it, or null.</summary>
+        /// <summary>
+        /// The mount this pawn is manning with a weapon on it, or null. Any pawn, inhabited or
+        /// not: the P:A gizmo swap (Pawn_EquipmentTracker_GetGizmos_MountAmmo) uses it too.
+        /// </summary>
         public static Building_WeaponMount ControlledMount(Pawn pawn)
         {
             if (pawn == null || !pawn.Spawned || pawn.CurJobDef != JobDefOf.ManTurret) return null;

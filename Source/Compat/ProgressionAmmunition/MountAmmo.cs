@@ -62,7 +62,7 @@ namespace MountedWeapons.Ammo
         /// <summary>An empty automated mount: the general hauling job.</summary>
         public static bool OpenToAnyHauler(Building_WeaponMount mount, CompAmmo comp)
         {
-            return comp.IsOutOfAmmo && mount.mannableComp == null;
+            return comp.IsOutOfAmmo && !mount.IsManned;
         }
 
         public static bool OutOfAmmo(Building_WeaponMount mount)

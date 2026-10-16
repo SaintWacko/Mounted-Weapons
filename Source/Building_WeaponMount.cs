@@ -57,6 +57,9 @@ namespace MountedWeapons
 
         public Pawn Gunner => mannableComp?.ManningPawn;
 
+        /// <summary>True for the manned line (has CompMannable), false for automated mounts.</summary>
+        public bool IsManned => mannableComp != null;
+
         // The base draws the turret top from the turret gun def's texture. The mount
         // draws the real weapon instead (DrawAt), so the top is drawn clear.
         public override Material TurretTopMaterial => BaseContent.ClearMat;

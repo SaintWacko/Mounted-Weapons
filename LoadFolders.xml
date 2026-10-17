@@ -2,6 +2,7 @@
 <loadFolders>
   <v1.6>
     <li>/</li>
+    <li>1.6</li>
     <!-- Automated mounts run on mech subcores, which only exist with Biotech.
          Without it the whole automated branch (buildings and research) is skipped. -->
     <li IfModActive="Ludeon.RimWorld.Biotech">Biotech</li>
@@ -9,4 +10,14 @@
          references that mod's DLL, so it must never load without it. -->
     <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
   </v1.6>
+  <v1.7>
+    <li>/</li>
+    <li>1.7</li>
+    <!-- Automated mounts run on mech subcores, which only exist with Biotech.
+         Without it the whole automated branch (buildings and research) is skipped. -->
+    <li IfModActive="Ludeon.RimWorld.Biotech">Biotech</li>
+    <!-- Mounts use and reload ammo when Progression: Ammunition is active. Its assembly
+         references that mod's DLL, so it must never load without it. -->
+    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
+  </v1.7>
 </loadFolders>

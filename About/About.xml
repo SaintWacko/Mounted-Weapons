@@ -6,6 +6,7 @@
   <description>Build weapon mounts that hold an ordinary ranged weapon and fire it in place, with greater range and accuracy than in a colonist's hands. Manned mounts use their gunner's shooting skill and give cover; with Biotech, automated mounts run on mech subcores or an AI persona core.</description>
   <supportedVersions>
     <li>1.6</li>
+    <li>1.7</li>
   </supportedVersions>
   <modDependencies>
     <li>

@@ -561,9 +561,11 @@ namespace MountedWeapons
             pendingWeapon = null;
             if (!Spawned) return;
             Thing weapon = RemoveWeapon();
-            if (weapon != null)
+            // With nowhere to drop it (a boxed-in mount), the weapon goes back on and
+            // packs up with the mount rather than being left unspawned and lost.
+            if (weapon != null && !GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near))
             {
-                GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near);
+                InstallWeapon(weapon);
             }
         }
 

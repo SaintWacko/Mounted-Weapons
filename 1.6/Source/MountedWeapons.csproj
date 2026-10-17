@@ -1,4 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    RimWorld 1.6 build of the main assembly. The C# is shared: every version compiles
+    the same files from the mod's top-level Source/ folder, and RW16 / RW17 are defined
+    for the places where the game versions differ. Output goes to 1.6/Assemblies, which
+    LoadFolders.xml loads only on 1.6.
+
+    The 1.6 game is no longer installed on this machine, so the game references come
+    from the Krafs.Rimworld.Ref package (reference assemblies of a 1.6 build) instead
+    of the install folder.
+  -->
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>MountedWeapons</AssemblyName>
@@ -6,55 +16,22 @@
     <OutputPath>..\Assemblies\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);RW16</DefineConstants>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Compat assemblies are separate projects, built by the target at the bottom. -->
-    <Compile Remove="Compat/**" />
-    <None Remove="Compat/**" />
+    <!-- Top level only: Compat/ is its own assembly, and obj/ holds generated files. -->
+    <Compile Include="..\..\Source\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4871" PrivateAssets="all">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/UnityEngine.CoreModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/UnityEngine.ImageConversionModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/UnityEngine.TextRenderingModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed/UnityEngine.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-  <!--
-    Progression: Ammunition support. It references that mod's DLL, so it is its own
-    assembly in Compat/ProgressionAmmunition/Assemblies, which LoadFolders.xml only loads
-    when the mod is active. Built after this one because it references MountedWeapons.dll.
-    Restore and Build are separate MSBuild calls with different global properties so the
-    build evaluation sees the restored assets.
-  -->
-  <Target Name="BuildCompatProjects" AfterTargets="Build">
-    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Restore" Properties="MWRestore=true" />
-    <MSBuild Projects="Compat/ProgressionAmmunition/MountedWeapons.ProgressionAmmunition.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
-  </Target>
 </Project>

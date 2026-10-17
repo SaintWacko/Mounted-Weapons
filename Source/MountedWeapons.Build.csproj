@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Build entry point only: compiles nothing and ships nothing (its own output stays in
+    Source/bin, which is never published). Circinus's build looks for a .csproj in
+    Source/, and the real projects live in 1.6/Source,
+    1.7/Source and Source/Compat/ProgressionAmmunition/<version>. Referencing the two
+    compat projects builds everything: each one references the main project for its
+    game version, so the order is main 1.6, compat 1.6, main 1.7, compat 1.7.
+
+    Open this project in an IDE to get all four. It has to be the only project file
+    directly in Source/, or `dotnet build` there stops and asks which one to build.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>MountedWeapons.Build</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Compat\ProgressionAmmunition\1.6\MountedWeapons.ProgressionAmmunition.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="Compat\ProgressionAmmunition\1.7\MountedWeapons.ProgressionAmmunition.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

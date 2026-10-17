@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Progression: Ammunition support for RimWorld 1.7. Same shared C# as the 1.6 project
+    (the files one folder up), compiled against the installed 1.7 game, with output in
+    Compat/ProgressionAmmunition/1.7/Assemblies.
+
+    P:A only ships a 1.6 folder so far, so this references its 1.6 DLL. When P:A adds a
+    1.7 build, point the HintPath at it.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <!-- ProgressionAmmunition.dll is built for net48; without this MSBuild drops the
+         reference and every type from it fails to resolve. RimWorld's Mono runs both. -->
+    <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
+    <AssemblyName>MountedWeapons.ProgressionAmmunition</AssemblyName>
+    <RootNamespace>MountedWeapons.Ammo</RootNamespace>
+    <OutputPath>..\..\..\..\Compat\ProgressionAmmunition\1.7\Assemblies\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);RW17</DefineConstants>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RimWorldBin>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/</RimWorldBin>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\1.7\Source\MountedWeapons.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ProgressionAmmunition">
+      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/workshop/content/294100/3798845290/1.6/Assemblies/ProgressionAmmunition.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RimWorldBin)Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(RimWorldBin)UnityStubs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Waylith">
+      <HintPath>$(RimWorldBin)Waylith.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

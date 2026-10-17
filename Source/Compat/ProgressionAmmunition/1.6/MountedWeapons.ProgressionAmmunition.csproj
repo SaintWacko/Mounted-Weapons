@@ -1,4 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Progression: Ammunition support for RimWorld 1.6. It references that mod's DLL, so
+    it is its own assembly, in Compat/ProgressionAmmunition/1.6/Assemblies, which
+    LoadFolders.xml loads only on 1.6 and only when the mod is active. The C# is shared
+    with the 1.7 project: both compile the files one folder up.
+
+    The project reference to the 1.6 main project builds it first and compiles against
+    its output, so this assembly always matches the MountedWeapons.dll it ships beside.
+  -->
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <!-- ProgressionAmmunition.dll is built for net48; without this MSBuild drops the
@@ -6,35 +15,36 @@
     <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
     <AssemblyName>MountedWeapons.ProgressionAmmunition</AssemblyName>
     <RootNamespace>MountedWeapons.Ammo</RootNamespace>
-    <OutputPath>..\..\..\Compat\ProgressionAmmunition\Assemblies\</OutputPath>
+    <OutputPath>..\..\..\..\Compat\ProgressionAmmunition\1.6\Assemblies\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);RW16</DefineConstants>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4871" PrivateAssets="all">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MountedWeapons">
-      <HintPath>/Users/tirrella/Library/Application Support/CircinusDevSuite/workspace/Mods/f5542185d692/Assemblies/MountedWeapons.dll</HintPath>
+    <ProjectReference Include="..\..\..\..\1.6\Source\MountedWeapons.csproj">
       <Private>false</Private>
-    </Reference>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="ProgressionAmmunition">
       <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/workshop/content/294100/3798845290/1.6/Assemblies/ProgressionAmmunition.dll</HintPath>
       <Private>false</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/UnityStubs.dll</HintPath>
-      <Private>False</Private>
     </Reference>
   </ItemGroup>
 </Project>

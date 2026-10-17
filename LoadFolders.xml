@@ -9,6 +9,7 @@
     <!-- Mounts use and reload ammo when Progression: Ammunition is active. Its assembly
          references that mod's DLL, so it must never load without it. -->
     <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
+    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition/1.6</li>
   </v1.6>
   <v1.7>
     <li>/</li>
@@ -19,5 +20,6 @@
     <!-- Mounts use and reload ammo when Progression: Ammunition is active. Its assembly
          references that mod's DLL, so it must never load without it. -->
     <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
+    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition/1.7</li>
   </v1.7>
 </loadFolders>

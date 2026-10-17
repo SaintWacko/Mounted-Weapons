@@ -78,4 +78,23 @@ namespace MountedWeapons
             }
         }
     }
+
+    /// <summary>
+    /// Uninstalling a building (and anything else that minifies it) goes through
+    /// MakeMinified, which despawns it with DestroyMode.Vanish. DeSpawn itself can't tell
+    /// minifying from a Vanish destroy or an Anomaly skip, so the mount is told here,
+    /// while it is still on the map, and drops its weapon. Gravship moves despawn with
+    /// WillReplace and never come through here, so a mount keeps its gun on a gravship.
+    /// </summary>
+    [HarmonyPatch(typeof(MinifyUtility), nameof(MinifyUtility.MakeMinified))]
+    public static class Patch_MinifyUtility_MakeMinified
+    {
+        public static void Prefix(Thing thing)
+        {
+            if (thing is Building_WeaponMount mount && thing.def.Minifiable)
+            {
+                mount.Notify_Minifying();
+            }
+        }
+    }
 }

@@ -33,7 +33,9 @@ namespace MountedWeapons.CE
             if (!(__instance.caster is Building_WeaponMount mount)) return true;
             if (mount.WarmupTicksLeft > 0)
             {
-                mount.WarmupTicksLeft = value;
+                // CE scales the count down and truncates; 0 would cancel the shot instead of
+                // firing it, because the mount only fires when a running warmup runs out.
+                mount.WarmupTicksLeft = value < 1 ? 1 : value;
             }
             return false;
         }

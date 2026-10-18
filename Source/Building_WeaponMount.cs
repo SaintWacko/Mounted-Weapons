@@ -417,7 +417,9 @@ namespace MountedWeapons
                 return;
             }
             int now = Find.TickManager.TicksGame;
-            if (fireReadyTick >= 0 && now >= fireReadyTick && now <= fireReadyTick + 2)
+            // One tick early is allowed: WarmupTicksLeft set before the base Tick's countdown
+            // (rather than from inside BeginBurst) runs out one tick sooner.
+            if (fireReadyTick >= 0 && now >= fireReadyTick - 1 && now <= fireReadyTick + 2)
             {
                 Fire();
                 return;

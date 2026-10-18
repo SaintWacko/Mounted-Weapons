@@ -62,7 +62,8 @@ namespace MountedWeapons.CE
             if (hasField == false)
             {
                 Log.WarningOnce("[Mounted Weapons] Combat Extended's Verb_ShootCE._isAiming was not found; "
-                    + "the mount patch on " + patch + " is off.", ("MW_CE_" + patch).GetHashCode());
+                    + "the mount patch on " + patch + " is off, and mounts in an aimed fire mode may not fire.",
+                    ("MW_CE_" + patch).GetHashCode());
             }
             return hasField == true;
         }
@@ -77,7 +78,8 @@ namespace MountedWeapons.CE
     /// to the mount's warmup the way CE's turret does, so the shot fires through the
     /// mount's own BeginBurst when it runs out.
     ///
-    /// ShouldAim is private to CE and found by name, so it is looked up in Prepare. If a CE
+    /// ShouldAim is protected in CE and found by name, so it is looked up in Prepare (the
+    /// delegate calls it virtually, so CE's own overrides still apply). If a CE
     /// update renames it, this logs one warning and mounts fire without the aiming time.
     /// Turning the patch off instead would leave CE's stance path in charge, and the shot
     /// would never fire (see above).

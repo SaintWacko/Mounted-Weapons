@@ -5,6 +5,7 @@ using CombatExtended.Compatibility;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using Verse.AI;
 
 namespace MountedWeapons.CE
 {
@@ -60,8 +61,10 @@ namespace MountedWeapons.CE
 
         public override void Notify_DeSpawned(Building_WeaponMount mount)
         {
+            EndReloadJobs(mount);
             mount.Map?.GetComponent<TurretTracker>()?.Unregister(mount);
             CombatExtendedCompat.reloading.Remove(mount);
+            CEMountAmmoHandler.reportedNoAmmo.Remove(mount.thingIDNumber);
         }
 
         public override void Notify_WeaponInstalled(Building_WeaponMount mount, Thing weapon)
@@ -71,10 +74,35 @@ namespace MountedWeapons.CE
 
         public override void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
         {
+            // Before the turret link is cleared: the job's finish action reports through it.
+            EndReloadJobs(mount);
             // Left set, the comp would keep reporting the mount's position and map after a
             // pawn picked the weapon up.
             SetTurret(weapon, null);
             CombatExtendedCompat.reloading.Remove(mount);
+            CEMountAmmoHandler.reportedNoAmmo.Remove(mount.thingIDNumber);
+        }
+
+        /// <summary>
+        /// CE's reload job never checks that the gun is still on the turret, so a pawn
+        /// reloading a mount whose weapon was removed, or which was minified, finished the
+        /// job and loaded the loose weapon, and CE logged "tried loading ammo with no owner"
+        /// (test run #1, 18 Oct). Ending the job first stops that. Only runs when a weapon
+        /// comes off or a mount despawns, so the pass over the map's pawns is rare.
+        /// </summary>
+        private static void EndReloadJobs(Building_WeaponMount mount)
+        {
+            Map map = mount.Map;
+            if (map == null) return;
+            var pawns = map.mapPawns.AllPawnsSpawned;
+            for (int i = pawns.Count - 1; i >= 0; i--)
+            {
+                Pawn pawn = pawns[i];
+                if (pawn.CurJobDef == CE_JobDefOf.ReloadTurret && pawn.CurJob.targetA.Thing == mount)
+                {
+                    pawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+                }
+            }
         }
 
         public override bool VerbTrainsGunner(Verb verb) => verb is Verb_ShootCE;

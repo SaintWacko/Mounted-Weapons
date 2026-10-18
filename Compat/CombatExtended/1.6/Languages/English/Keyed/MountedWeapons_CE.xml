@@ -4,4 +4,8 @@
   <MW_CE_InspectMagazine>Magazine: {0}</MW_CE_InspectMagazine>
   <!-- {1} is the loaded ammo type, e.g. FMJ. -->
   <MW_CE_InspectMagazineAmmo>Magazine: {0} ({1})</MW_CE_InspectMagazineAmmo>
+  <!-- A gunner can't reload their mount. {0} is the gunner, {1} the selected ammo, {2} the mount. -->
+  <MW_CE_NoAmmo>{0} has no {1} to reload the {2}.</MW_CE_NoAmmo>
+  <!-- As above, when other ammo types for the weapon are on the map. {3} lists them, e.g. "HE, AP". -->
+  <MW_CE_NoAmmoOthers>{0} has no {1} to reload the {2}. Available: {3}. Change the ammo type with the reload button.</MW_CE_NoAmmoOthers>
 </LanguageData>

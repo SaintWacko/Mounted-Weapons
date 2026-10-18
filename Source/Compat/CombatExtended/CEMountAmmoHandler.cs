@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using CombatExtended;
 using CombatExtended.Compatibility;
 using RimWorld;
 using Verse;
+using Verse.AI;
 
 namespace MountedWeapons.CE
 {
@@ -22,6 +24,12 @@ namespace MountedWeapons.CE
 
         // Not saved: after a load the gunner simply looks again on the next check.
         private readonly Dictionary<int, int> nextGunnerTry = new Dictionary<int, int>();
+
+        // Mounts whose gunner has already been reported as having no ammo since the mount
+        // ran dry, so the message shows once per empty magazine rather than every retry.
+        // Cleared when rounds are loaded, the weapon comes off or the mount despawns.
+        // Not saved: after a load the message can show once more.
+        internal static readonly HashSet<int> reportedNoAmmo = new HashSet<int>();
 
         public static CompAmmoUser AmmoOf(Building_WeaponMount mount) => mount.MountedWeapon?.TryGetComp<CompAmmoUser>();
 
@@ -52,10 +60,15 @@ namespace MountedWeapons.CE
         public override void MountTick(Building_WeaponMount mount)
         {
             if (!mount.IsHashIntervalTick(GunnerCheckInterval)) return;
+            CompAmmoUser ammo = AmmoOf(mount);
+            if (ammo == null || !ammo.HasMagazine) return;
+            if (ammo.CurMagCount > 0)
+            {
+                reportedNoAmmo.Remove(mount.thingIDNumber);
+                return;
+            }
             Pawn gunner = mount.Gunner;
             if (gunner == null || gunner.CurJobDef != JobDefOf.ManTurret || ModCompat.IsAvatar(gunner)) return;
-            CompAmmoUser ammo = AmmoOf(mount);
-            if (ammo == null || !ammo.HasMagazine || ammo.CurMagCount > 0) return;
             if (CombatExtendedCompat.reloading.Contains(mount)) return;
 
             int now = Find.TickManager.TicksGame;
@@ -64,6 +77,89 @@ namespace MountedWeapons.CE
             if (nextGunnerTry.TryGetValue(mount.thingIDNumber, out int next) && now < next && next - now <= RetryTicks) return;
             nextGunnerTry[mount.thingIDNumber] = now + RetryTicks;
             mount.TryOrderReload();
+            if (!reportedNoAmmo.Contains(mount.thingIDNumber) && !IsReloading(gunner, mount)
+                && ReportNoAmmo(mount, gunner, MessageTypeDefOf.NegativeEvent))
+            {
+                reportedNoAmmo.Add(mount.thingIDNumber);
+            }
+        }
+
+        /// <summary>
+        /// The reload order starts CE's job synchronously, so right after it the gunner is
+        /// either on that job or the order was refused.
+        /// </summary>
+        private static bool IsReloading(Pawn pawn, Building_WeaponMount mount) =>
+            pawn.CurJobDef == CE_JobDefOf.ReloadTurret && pawn.CurJob.targetA.Thing == mount;
+
+        /// <summary>
+        /// CE refuses a reload without a word when none of the selected ammo type is on the
+        /// map (CE_NoAmmoAvailable only reaches a float menu tooltip), and the selected type
+        /// is what the gunner fetches, even when another type in the weapon's set is lying
+        /// next to the mount. This says so, and names the other types the gunner could use.
+        /// Returns false, showing nothing, when the selected type is available and the
+        /// refusal had some other cause (the ammo reserved, the mount burning).
+        ///
+        /// Only after a refusal, and at most once per empty magazine from MountTick, so the
+        /// lister scan and the reach checks don't run while the mount is firing.
+        /// </summary>
+        internal static bool ReportNoAmmo(Building_WeaponMount mount, Pawn gunner, MessageTypeDef type)
+        {
+            if (mount.Faction != Faction.OfPlayer || gunner?.Map == null) return false;
+            CompAmmoUser ammo = AmmoOf(mount);
+            AmmoDef selected = ammo?.SelectedAmmo;
+            if (ammo == null || !ammo.UseAmmo || selected == null) return false;
+            if (AmmoAvailable(gunner, selected)) return false;
+
+            List<string> others = new List<string>();
+            if (ammo.CurAmmoSet?.ammoTypes != null)
+            {
+                foreach (AmmoLink link in ammo.CurAmmoSet.ammoTypes)
+                {
+                    AmmoDef def = link.ammo;
+                    if (def == null || def == selected || !AmmoAvailable(gunner, def)) continue;
+                    string label = def.ammoClass != null ? (string)def.ammoClass.LabelCap : (string)def.LabelCap;
+                    if (!others.Contains(label)) others.Add(label);
+                }
+            }
+            string text = others.Count == 0
+                ? "MW_CE_NoAmmo".Translate(gunner.LabelShort, selected.label, mount.Label)
+                : "MW_CE_NoAmmoOthers".Translate(gunner.LabelShort, selected.label, mount.Label, others.ToCommaList());
+            Messages.Message(text, new LookTargets(mount), type, historical: false);
+            return true;
+        }
+
+        /// <summary>
+        /// Roughly CE's own ammo search for a turret reload: spawned on the map, not
+        /// forbidden, not burning or cooking off, reservable and reachable. CE does not take
+        /// ammo from the gunner's inventory for a turret, so neither does this.
+        /// </summary>
+        private static bool AmmoAvailable(Pawn pawn, AmmoDef def)
+        {
+            List<Thing> things = pawn.Map.listerThings.ThingsOfDef(def);
+            for (int i = 0; i < things.Count; i++)
+            {
+                Thing thing = things[i];
+                if (thing is AmmoThing cooking && cooking.IsCookingOff) continue;
+                if (thing.IsBurning() || thing.IsForbidden(pawn)) continue;
+                if (!pawn.CanReserve(thing) || !pawn.CanReach(thing, PathEndMode.ClosestTouch, Danger.Deadly)) continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// After a reload button press or a Perspective Shift click: if the gunner didn't
+        /// start reloading and the cause is missing ammo, say so. A full magazine of the
+        /// selected type is refused too, and needs no message.
+        /// </summary>
+        private static void ReportIfRefused(Building_WeaponMount mount)
+        {
+            Pawn gunner = mount.Gunner;
+            if (gunner == null || IsReloading(gunner, mount)) return;
+            if (ReportNoAmmo(mount, gunner, MessageTypeDefOf.RejectInput))
+            {
+                reportedNoAmmo.Add(mount.thingIDNumber);
+            }
         }
 
         /// <summary>
@@ -76,6 +172,7 @@ namespace MountedWeapons.CE
             if (pawn.CurJobDef != JobDefOf.ManTurret || pawn.CurJob.targetA.Thing != mount) return;
             if (AmmoOf(mount) == null) return;
             mount.TryForceReload();
+            ReportIfRefused(mount);
         }
 
         public override string InspectLine(Building_WeaponMount mount)
@@ -95,6 +192,11 @@ namespace MountedWeapons.CE
         /// The weapon's own CE gizmos, as Building_TurretGunCE shows them: the magazine bar,
         /// reload and ammo type (CompAmmoUser), then fire and aim mode (CompFireModes). The
         /// mount only asks for these on a player mount.
+        ///
+        /// CE gives the reload button an action only while the mount is manned (an unmanned
+        /// mount's button opens the ammo type menu, and haulers do the reload). That action
+        /// is wrapped so a refused reload reports missing ammo. CE's ammo menu reads the
+        /// command's action when it opens, so its Reload entry runs the wrapped one too.
         /// </summary>
         public override IEnumerable<Gizmo> Gizmos(Building_WeaponMount mount)
         {
@@ -105,6 +207,15 @@ namespace MountedWeapons.CE
             {
                 foreach (Gizmo gizmo in ammo.CompGetGizmosExtra())
                 {
+                    if (gizmo is Command_Reload reload && reload.action != null)
+                    {
+                        Action original = reload.action;
+                        reload.action = () =>
+                        {
+                            original();
+                            ReportIfRefused(mount);
+                        };
+                    }
                     yield return gizmo;
                 }
             }

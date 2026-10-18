@@ -89,6 +89,9 @@ namespace MountedWeapons.CE
         /// job and loaded the loose weapon, and CE logged "tried loading ammo with no owner"
         /// (test run #1, 18 Oct). Ending the job first stops that. Only runs when a weapon
         /// comes off or a mount despawns, so the pass over the map's pawns is rare.
+        ///
+        /// A reload job still waiting in a pawn's queue is dropped too: when it came up, CE
+        /// would find no ammo comp on the empty mount and log an error.
         /// </summary>
         private static void EndReloadJobs(Building_WeaponMount mount)
         {
@@ -98,6 +101,11 @@ namespace MountedWeapons.CE
             for (int i = pawns.Count - 1; i >= 0; i--)
             {
                 Pawn pawn = pawns[i];
+                if (pawn.jobs == null) continue;
+                if (pawn.jobs.jobQueue.Count > 0)
+                {
+                    pawn.jobs.jobQueue.RemoveAll(pawn, job => job.def == CE_JobDefOf.ReloadTurret && job.targetA.Thing == mount);
+                }
                 if (pawn.CurJobDef == CE_JobDefOf.ReloadTurret && pawn.CurJob.targetA.Thing == mount)
                 {
                     pawn.jobs.EndCurrentJob(JobCondition.Incompletable);

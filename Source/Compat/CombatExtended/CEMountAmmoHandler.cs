@@ -28,8 +28,18 @@ namespace MountedWeapons.CE
         // Mounts whose gunner has already been reported as having no ammo since the mount
         // ran dry, so the message shows once per empty magazine rather than every retry.
         // Cleared when rounds are loaded, the weapon comes off or the mount despawns.
-        // Not saved: after a load the message can show once more.
+        // Not saved, and emptied when a different game is running (ClearIfNewGame), so
+        // the message can show once more after loading a save, and an ID repeated from
+        // another save doesn't hide it.
         internal static readonly HashSet<int> reportedNoAmmo = new HashSet<int>();
+        private static Game reportedFor;
+
+        private static void ClearIfNewGame()
+        {
+            if (reportedFor == Current.Game) return;
+            reportedFor = Current.Game;
+            reportedNoAmmo.Clear();
+        }
 
         public static CompAmmoUser AmmoOf(Building_WeaponMount mount) => mount.MountedWeapon?.TryGetComp<CompAmmoUser>();
 
@@ -62,6 +72,7 @@ namespace MountedWeapons.CE
             if (!mount.IsHashIntervalTick(GunnerCheckInterval)) return;
             CompAmmoUser ammo = AmmoOf(mount);
             if (ammo == null || !ammo.HasMagazine) return;
+            ClearIfNewGame();
             if (ammo.CurMagCount > 0)
             {
                 reportedNoAmmo.Remove(mount.thingIDNumber);
@@ -156,6 +167,7 @@ namespace MountedWeapons.CE
         {
             Pawn gunner = mount.Gunner;
             if (gunner == null || IsReloading(gunner, mount)) return;
+            ClearIfNewGame();
             if (ReportNoAmmo(mount, gunner, MessageTypeDefOf.RejectInput))
             {
                 reportedNoAmmo.Add(mount.thingIDNumber);
@@ -193,9 +205,10 @@ namespace MountedWeapons.CE
         /// reload and ammo type (CompAmmoUser), then fire and aim mode (CompFireModes). The
         /// mount only asks for these on a player mount.
         ///
-        /// CE gives the reload button an action only while the mount is manned (an unmanned
-        /// mount's button opens the ammo type menu, and haulers do the reload). That action
-        /// is wrapped so a refused reload reports missing ammo. CE's ammo menu reads the
+        /// CE gives the reload button an action on any mannable turret, but its button only
+        /// runs it while someone mans the mount; on an unmanned mount it opens the ammo type
+        /// menu, and haulers do the reload. The action is wrapped so a refused reload
+        /// reports missing ammo. CE's ammo menu reads the
         /// command's action when it opens, so its Reload entry runs the wrapped one too.
         /// </summary>
         public override IEnumerable<Gizmo> Gizmos(Building_WeaponMount mount)

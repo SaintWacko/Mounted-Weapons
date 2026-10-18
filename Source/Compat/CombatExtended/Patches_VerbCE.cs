@@ -44,6 +44,30 @@ namespace MountedWeapons.CE
     }
 
     /// <summary>
+    /// A mount's stability under CE: it removes that fraction of the gun's sway, the slow
+    /// drift CE adds to every shot from the shooter's skill and the weapon's sway factor.
+    /// Without CE, stability removes that fraction of the gunner's per-cell miss chance
+    /// (Patch_ShotReport_HitFactorFromShooter), which CE's ballistics never read.
+    ///
+    /// Patched on CE's base getter, which every sway figure goes through: the shot itself
+    /// (GetSwayVec), the hit-chance report and tooltip (ShiftVecReportFor), and
+    /// Verb_ShootCE's override and SwayAmplitudeFor, which both start from base.SwayAmplitude
+    /// and then apply aiming. So the reduction applies once, before aiming, the same in
+    /// every path. Recoil and spread are left alone.
+    ///
+    /// Manned mounts only, as without CE: an automated mount's accuracy is its own stat.
+    /// </summary>
+    [HarmonyPatch(typeof(Verb_LaunchProjectileCE), nameof(Verb_LaunchProjectileCE.SwayAmplitude), MethodType.Getter)]
+    public static class Patch_SwayAmplitude
+    {
+        public static void Postfix(Verb_LaunchProjectileCE __instance, ref float __result)
+        {
+            if (!(__instance.caster is Building_WeaponMount mount) || mount.Gunner == null) return;
+            __result *= 1f - Mathf.Clamp01(mount.Ext.stability);
+        }
+    }
+
+    /// <summary>
     /// The two patches below take CE's private _isAiming field by Harmony's ____ name.
     /// Harmony throws inside PatchAll when a named field is missing, which would stop every
     /// patch in this assembly, so each one checks for it first and turns itself off.

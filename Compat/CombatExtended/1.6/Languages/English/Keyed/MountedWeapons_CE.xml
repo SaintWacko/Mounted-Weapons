@@ -13,4 +13,7 @@
   <!-- Used when Combat Extended's right-click ammo select setting is on (its default). -->
   <MW_CE_ChangeAmmoRightClick>Right-click the reload button to change the ammo type.</MW_CE_ChangeAmmoRightClick>
   <MW_CE_ChangeAmmoClick>Click the reload button to change the ammo type.</MW_CE_ChangeAmmoClick>
+  <!-- Manned mount settings tab, in place of MW_Settings_Stability(Hint) while Combat Extended is active. -->
+  <MW_CE_Settings_Stability>Sway removed</MW_CE_Settings_Stability>
+  <MW_CE_Settings_StabilityHint>Share of the weapon's sway the mount removes.</MW_CE_Settings_StabilityHint>
 </LanguageData>

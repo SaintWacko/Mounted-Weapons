@@ -1,0 +1,69 @@
+using System.Text;
+using CombatExtended;
+using HarmonyLib;
+using RimWorld;
+using Verse;
+
+namespace MountedWeapons.CE
+{
+    /// <summary>
+    /// CE runs out of ammo by calling CompAmmoUser.TryStartReload from the verb (after the
+    /// last shot, and when a cast starts on an empty magazine). For a turret that goes to
+    /// TurretRegistry.TryOrderReload, which puts the gunner on a reload job. The pawn the
+    /// player inhabits in Perspective Shift reloads only when the player clicks the mount
+    /// (AvatarMountControl.Click), as without CE, so the automatic order is skipped for
+    /// that gunner. The click goes through TryForceReload and is not affected.
+    /// </summary>
+    [HarmonyPatch(typeof(CompAmmoUser), nameof(CompAmmoUser.TryStartReload))]
+    public static class Patch_CompAmmoUser_TryStartReload
+    {
+        public static bool Prefix(CompAmmoUser __instance)
+        {
+            return !(__instance.turret is Building_WeaponMount mount) || !mount.AvatarControlled;
+        }
+    }
+
+    /// <summary>
+    /// The hit-chance tooltip with a mount selected. Vanilla writes it for any
+    /// Building_TurretGun from its own ShotReport, which knows nothing of CE's ballistics
+    /// (it read "Shooter 100%, Weapon 100%"). CE writes its own readout only for its turret
+    /// class and for pawns, and only when vanilla's text is empty. For a mount firing a CE
+    /// weapon this writes CE's readout the way CE does for its turrets: sway (after the
+    /// mount's stability), spread, lighting, weather, cover and the rest, for the gunner
+    /// as the shooter. A mount firing a weapon CE didn't patch keeps vanilla's tooltip,
+    /// which is right for it.
+    /// </summary>
+    [HarmonyPatch(typeof(TooltipUtility), nameof(TooltipUtility.ShotCalculationTipString))]
+    public static class Patch_ShotCalculationTipString
+    {
+        public static bool Prefix(Thing target, ref string __result)
+        {
+            if (!(Find.Selector.SingleSelectedThing is Building_WeaponMount mount) || mount == target) return true;
+            if (!(mount.AttackVerb is Verb_LaunchProjectileCE verb)) return true;
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine();
+            sb.Append("ShotBy".Translate(mount.LabelShort, mount).Resolve() + ":\n");
+            if (verb.CanHitTarget(new LocalTargetInfo(target), out string report))
+            {
+                sb.Append(verb.ShiftVecReportFor(new LocalTargetInfo(target)).GetTextReadout());
+            }
+            else
+            {
+                sb.Append("CannotHit".Translate().Resolve());
+                if (!report.NullOrEmpty()) sb.Append(" " + report + ".");
+            }
+            if (target is Pawn pawn && pawn.Faction == null && !pawn.InAggroMentalState && pawn.AnimalOrWildMan())
+            {
+                float chance = PawnUtility.GetManhunterOnDamageChance(pawn, mount);
+                if (chance > 0f)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine(string.Format("{0}: {1}", "ManhunterPerHit".Translate(), chance.ToStringPercent()));
+                }
+            }
+            __result = sb.ToString();
+            return false;
+        }
+    }
+}

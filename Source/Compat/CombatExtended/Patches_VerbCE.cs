@@ -143,6 +143,13 @@ namespace MountedWeapons.CE
                 ____isAiming = true;
                 return true;
             }
+            // Perspective Shift's "disable aiming delay" drops the mount's warmup for its
+            // avatar (Building_WeaponMount.WarmupTicks); it covers CE's aimed-shot time too.
+            if (ModCompat.AvatarSkipsAiming && mount.AvatarControlled)
+            {
+                ____isAiming = true;
+                return true;
+            }
             if (____isAiming || !shouldAim(__instance)) return true;
             // CE's own numbers for its turrets (Verb_ShootCE.WarmupComplete).
             float distance = (__instance.CurrentTarget.Cell - mount.Position).LengthHorizontal;

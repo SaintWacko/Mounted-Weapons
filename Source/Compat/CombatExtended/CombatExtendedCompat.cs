@@ -45,6 +45,7 @@ namespace MountedWeapons.CE
                 gun: turret => ((Building_WeaponMount)turret).MountedWeapon,
                 ammo: turret => ((Building_WeaponMount)turret).MountedWeapon?.TryGetComp<CompAmmoUser>());
             MountCombatHandler.Active = new CEMountCombatHandler();
+            MountAmmoHandler.Active = new CEMountAmmoHandler();
             new Harmony(MountedWeaponsMod.HarmonyId + ".CombatExtended").PatchAll(Assembly.GetExecutingAssembly());
         }
     }

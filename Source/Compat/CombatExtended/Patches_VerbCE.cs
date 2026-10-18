@@ -74,6 +74,10 @@ namespace MountedWeapons.CE
     /// aimed shot would then start over every time it was due to fire. For a mount, the
     /// flag lasts as long as the mount's warmup and is cleared when that is cancelled. The
     /// rest of CE's check (bipod setup) applies only to drafted pawns.
+    ///
+    /// CE's body also ends an aim early when ShouldAim turns false partway through (a
+    /// suppressed pawn, for one). Skipping it means a mount never cuts an aim short: once
+    /// the aiming time is added, the shot waits for it to run out.
     /// </summary>
     [HarmonyPatch(typeof(Verb_ShootCE), nameof(Verb_ShootCE.VerbTickCE))]
     public static class Patch_VerbTickCE

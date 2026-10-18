@@ -47,8 +47,9 @@ namespace MountedWeapons
         /// True when a weapon whose primary verb is this one can go on a mount, for verbs the
         /// vanilla check in MountUtility doesn't know. Combat Extended's guns shoot with its own
         /// verb class, which doesn't derive from Verb_LaunchProjectile. Asked after the
-        /// item checks (ranged, primary, not a grenade, not neolithic) have passed.
+        /// item checks (ranged, primary, not a grenade, not neolithic) have passed. The def is
+        /// passed so the handler can refuse a weapon its own system can't feed on a mount.
         /// </summary>
-        public virtual bool IsMountableVerb(VerbProperties primary) => false;
+        public virtual bool IsMountableVerb(ThingDef def, VerbProperties primary) => false;
     }
 }

@@ -83,12 +83,21 @@ namespace MountedWeapons.CE
         /// CE converts guns to Verb_ShootCE, which derives from Verb directly, so the vanilla
         /// verb check refuses them. Single-use launchers (Verb_ShootCEOneUse and its static
         /// variant) stay excluded, as their vanilla counterparts are.
+        ///
+        /// So does a weapon that takes ammo but has no magazine. CE feeds those (bows, and
+        /// some modded crossbows) a round at a time from the wielder's inventory, and a mount
+        /// has none, so it would never fire. Bows are already refused as neolithic before
+        /// this is asked; this catches the crossbows. It is refused even with CE's ammo
+        /// system switched off, so the answer doesn't change with a setting after the
+        /// mountable list has been cached.
         /// </summary>
-        public override bool IsMountableVerb(VerbProperties primary)
+        public override bool IsMountableVerb(ThingDef def, VerbProperties primary)
         {
             System.Type verbClass = primary.verbClass;
-            return typeof(Verb_ShootCE).IsAssignableFrom(verbClass)
-                && !typeof(Verb_ShootCEOneUse).IsAssignableFrom(verbClass);
+            if (!typeof(Verb_ShootCE).IsAssignableFrom(verbClass)
+                || typeof(Verb_ShootCEOneUse).IsAssignableFrom(verbClass)) return false;
+            CompProperties_AmmoUser ammo = def.GetCompProperties<CompProperties_AmmoUser>();
+            return ammo == null || ammo.ammoSet == null || ammo.magazineSize > 0;
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 using System;
+using System.Reflection;
 using CombatExtended;
+using Verse;
 using HarmonyLib;
 using UnityEngine;
 
@@ -42,6 +44,31 @@ namespace MountedWeapons.CE
     }
 
     /// <summary>
+    /// The two patches below take CE's private _isAiming field by Harmony's ____ name.
+    /// Harmony throws inside PatchAll when a named field is missing, which would stop every
+    /// patch in this assembly, so each one checks for it first and turns itself off.
+    /// </summary>
+    internal static class CEPatchChecks
+    {
+        private static bool? hasField;
+
+        public static bool HasAimingField(string patch)
+        {
+            if (hasField == null)
+            {
+                FieldInfo field = AccessTools.Field(typeof(Verb_ShootCE), "_isAiming");
+                hasField = field != null && field.FieldType == typeof(bool);
+            }
+            if (hasField == false)
+            {
+                Log.WarningOnce("[Mounted Weapons] Combat Extended's Verb_ShootCE._isAiming was not found; "
+                    + "the mount patch on " + patch + " is off.", ("MW_CE_" + patch).GetHashCode());
+            }
+            return hasField == true;
+        }
+    }
+
+    /// <summary>
     /// An aimed shot (CE's default aim mode) adds 30 to 240 ticks of aiming, by distance,
     /// before the burst. CE's turret adds them to its own warmup; for any other caster, CE
     /// puts a warmup stance on the shooter, which for a manned mount is the gunner. That
@@ -49,17 +76,48 @@ namespace MountedWeapons.CE
     /// would be cleared on the next tick (see Patch_VerbTickCE). This adds the aiming time
     /// to the mount's warmup the way CE's turret does, so the shot fires through the
     /// mount's own BeginBurst when it runs out.
+    ///
+    /// ShouldAim is private to CE and found by name, so it is looked up in Prepare. If a CE
+    /// update renames it, this logs one warning and mounts fire without the aiming time.
+    /// Turning the patch off instead would leave CE's stance path in charge, and the shot
+    /// would never fire (see above).
     /// </summary>
     [HarmonyPatch(typeof(Verb_ShootCE), nameof(Verb_ShootCE.WarmupComplete))]
     public static class Patch_VerbShootCE_WarmupComplete
     {
-        internal static readonly Func<Verb_ShootCE, bool> ShouldAim =
-            AccessTools.MethodDelegate<Func<Verb_ShootCE, bool>>(AccessTools.PropertyGetter(typeof(Verb_ShootCE), "ShouldAim"));
+        private static Func<Verb_ShootCE, bool> shouldAim;
+        private static bool warned;
+
+        public static bool Prepare()
+        {
+            if (!CEPatchChecks.HasAimingField("WarmupComplete")) return false;
+            if (shouldAim == null)
+            {
+                MethodInfo getter = AccessTools.PropertyGetter(typeof(Verb_ShootCE), "ShouldAim");
+                if (getter != null && getter.ReturnType == typeof(bool) && getter.GetParameters().Length == 0)
+                {
+                    shouldAim = AccessTools.MethodDelegate<Func<Verb_ShootCE, bool>>(getter);
+                }
+                else if (!warned)
+                {
+                    warned = true;
+                    Log.Warning("[Mounted Weapons] Combat Extended's Verb_ShootCE.ShouldAim was not found; "
+                        + "mounts will fire without aiming time.");
+                }
+            }
+            return true;
+        }
 
         public static bool Prefix(Verb_ShootCE __instance, ref bool ____isAiming)
         {
             if (!(__instance.caster is Building_WeaponMount mount)) return true;
-            if (____isAiming || !ShouldAim(__instance)) return true;
+            if (shouldAim == null)
+            {
+                // Marks the aim as done, so CE's own body fires straight away.
+                ____isAiming = true;
+                return true;
+            }
+            if (____isAiming || !shouldAim(__instance)) return true;
             // CE's own numbers for its turrets (Verb_ShootCE.WarmupComplete).
             float distance = (__instance.CurrentTarget.Cell - mount.Position).LengthHorizontal;
             mount.WarmupTicksLeft = (int)Mathf.Lerp(30f, 240f, distance / 100f);
@@ -82,6 +140,8 @@ namespace MountedWeapons.CE
     [HarmonyPatch(typeof(Verb_ShootCE), nameof(Verb_ShootCE.VerbTickCE))]
     public static class Patch_VerbTickCE
     {
+        public static bool Prepare() => CEPatchChecks.HasAimingField("VerbTickCE");
+
         public static bool Prefix(Verb_ShootCE __instance, ref bool ____isAiming)
         {
             if (!(__instance.caster is Building_WeaponMount mount)) return true;

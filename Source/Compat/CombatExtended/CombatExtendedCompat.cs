@@ -26,23 +26,11 @@ namespace MountedWeapons.CE
     [StaticConstructorOnStartup]
     public static class CombatExtendedCompat
     {
-        /// <summary>
-        /// Mounts a pawn is reloading right now. CE keeps this flag on its own turrets;
-        /// for a registered turret type it asks us. Not saved: a reload in progress at save
-        /// time starts again after loading, and the job sets it again.
-        /// </summary>
-        internal static readonly HashSet<Building_WeaponMount> reloading = new HashSet<Building_WeaponMount>();
-
         static CombatExtendedCompat()
         {
             TurretRegistry.RegisterReloadableTurret(typeof(Building_WeaponMount),
-                setReload: (turret, value) =>
-                {
-                    Building_WeaponMount mount = (Building_WeaponMount)turret;
-                    if (value) reloading.Add(mount);
-                    else reloading.Remove(mount);
-                },
-                getReload: turret => reloading.Contains((Building_WeaponMount)turret),
+                setReload: (turret, value) => CEMountState.SetReloading((Building_WeaponMount)turret, value),
+                getReload: turret => CEMountState.IsReloading((Building_WeaponMount)turret),
                 gun: turret => ((Building_WeaponMount)turret).MountedWeapon,
                 ammo: turret => ((Building_WeaponMount)turret).MountedWeapon?.TryGetComp<CompAmmoUser>());
             MountCombatHandler.Active = new CEMountCombatHandler();
@@ -63,8 +51,7 @@ namespace MountedWeapons.CE
         {
             EndReloadJobs(mount);
             mount.Map?.GetComponent<TurretTracker>()?.Unregister(mount);
-            CombatExtendedCompat.reloading.Remove(mount);
-            CEMountAmmoHandler.reportedNoAmmo.Remove(mount.thingIDNumber);
+            CEMountState.Forget(mount);
         }
 
         public override void Notify_WeaponInstalled(Building_WeaponMount mount, Thing weapon)
@@ -79,8 +66,7 @@ namespace MountedWeapons.CE
             // Left set, the comp would keep reporting the mount's position and map after a
             // pawn picked the weapon up.
             SetTurret(weapon, null);
-            CombatExtendedCompat.reloading.Remove(mount);
-            CEMountAmmoHandler.reportedNoAmmo.Remove(mount.thingIDNumber);
+            CEMountState.Forget(mount);
         }
 
         /// <summary>
@@ -116,8 +102,9 @@ namespace MountedWeapons.CE
         public override bool VerbTrainsGunner(Verb verb) => verb is Verb_ShootCE;
 
         /// <summary>
-        /// CE converts guns to Verb_ShootCE, which derives from Verb directly, so the vanilla
-        /// verb check refuses them. Single-use launchers (Verb_ShootCEOneUse and its static
+        /// CE converts guns to Verb_ShootCE, which derives from Verb through
+        /// Verb_LaunchProjectileCE and never from Verb_LaunchProjectile, so the vanilla verb
+        /// check refuses them. Single-use launchers (Verb_ShootCEOneUse and its static
         /// variant) stay excluded, as their vanilla counterparts are.
         ///
         /// So does a weapon that takes ammo but has no magazine. CE feeds those (bows, and
@@ -148,6 +135,86 @@ namespace MountedWeapons.CE
             {
                 ammo.turret = turret;
             }
+        }
+    }
+
+    /// <summary>
+    /// Per-mount state the CE compat keeps outside the save: which mounts are being
+    /// reloaded (CE keeps that flag on its own turrets and asks us for a registered type),
+    /// when the gunner may next try a reload, and the last no-ammo message shown.
+    ///
+    /// Keyed by thing ID and dropped whenever a different game is running, so nothing
+    /// here holds a mount, a map or the previous game after a quit to the menu, and an ID
+    /// repeated from another save starts clean. A reload in progress at save time starts
+    /// again after loading, and the job sets its flag again.
+    /// </summary>
+    internal static class CEMountState
+    {
+        private static readonly HashSet<int> reloading = new HashSet<int>();
+        private static readonly Dictionary<int, int> nextGunnerTry = new Dictionary<int, int>();
+        private static readonly Dictionary<int, string> lastReport = new Dictionary<int, string>();
+        private static System.WeakReference<Game> game;
+
+        private static void Sync()
+        {
+            Game current = Current.Game;
+            if (game != null && game.TryGetTarget(out Game known) && known == current) return;
+            game = new System.WeakReference<Game>(current);
+            reloading.Clear();
+            nextGunnerTry.Clear();
+            lastReport.Clear();
+        }
+
+        public static bool IsReloading(Building_WeaponMount mount)
+        {
+            Sync();
+            return reloading.Contains(mount.thingIDNumber);
+        }
+
+        public static void SetReloading(Building_WeaponMount mount, bool value)
+        {
+            Sync();
+            if (value) reloading.Add(mount.thingIDNumber);
+            else reloading.Remove(mount.thingIDNumber);
+        }
+
+        /// <summary>
+        /// True at most once per <paramref name="retryTicks"/> for each mount, and records the
+        /// try. The span check matters within one game too: a stored tick far ahead of the
+        /// clock would otherwise block the gunner.
+        /// </summary>
+        public static bool RetryDue(Building_WeaponMount mount, int retryTicks)
+        {
+            Sync();
+            int now = Find.TickManager.TicksGame;
+            if (nextGunnerTry.TryGetValue(mount.thingIDNumber, out int next) && now < next && next - now <= retryTicks) return false;
+            nextGunnerTry[mount.thingIDNumber] = now + retryTicks;
+            return true;
+        }
+
+        /// <summary>True when <paramref name="text"/> differs from the last message shown for the mount, and records it.</summary>
+        public static bool ShouldReport(Building_WeaponMount mount, string text)
+        {
+            Sync();
+            if (lastReport.TryGetValue(mount.thingIDNumber, out string last) && last == text) return false;
+            lastReport[mount.thingIDNumber] = text;
+            return true;
+        }
+
+        /// <summary>Rounds are loaded: the next time the mount runs dry may report again.</summary>
+        public static void ClearReport(Building_WeaponMount mount)
+        {
+            Sync();
+            lastReport.Remove(mount.thingIDNumber);
+        }
+
+        /// <summary>The weapon came off or the mount despawned.</summary>
+        public static void Forget(Building_WeaponMount mount)
+        {
+            Sync();
+            reloading.Remove(mount.thingIDNumber);
+            nextGunnerTry.Remove(mount.thingIDNumber);
+            lastReport.Remove(mount.thingIDNumber);
         }
     }
 }

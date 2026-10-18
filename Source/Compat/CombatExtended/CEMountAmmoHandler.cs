@@ -160,6 +160,9 @@ namespace MountedWeapons.CE
         {
             Pawn gunner = mount.Gunner;
             if (gunner == null || IsReloading(gunner, mount)) return;
+            // CE's own early exit in TryOrderReload: nothing to load, whatever is on the map.
+            CompAmmoUser ammo = AmmoOf(mount);
+            if (ammo == null || (ammo.CurrentAmmo == ammo.SelectedAmmo && ammo.FullMagazine)) return;
             string text = NoAmmoText(mount, gunner);
             if (text == null) return;
             CEMountState.ShouldReport(mount, text);

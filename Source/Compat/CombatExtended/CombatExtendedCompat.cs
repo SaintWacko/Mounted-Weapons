@@ -145,8 +145,9 @@ namespace MountedWeapons.CE
     ///
     /// Keyed by thing ID and dropped whenever a different game is running, so nothing
     /// here holds a mount, a map or the previous game after a quit to the menu, and an ID
-    /// repeated from another save starts clean. A reload in progress at save time starts
-    /// again after loading, and the job sets its flag again.
+    /// repeated from another save starts clean. CE sets the reloading flag when the wait
+    /// toil starts, so a save loaded mid-wait has it clear until the job ends: the inspect
+    /// pane shows the magazine line for that one reload. Nothing errors.
     /// </summary>
     internal static class CEMountState
     {

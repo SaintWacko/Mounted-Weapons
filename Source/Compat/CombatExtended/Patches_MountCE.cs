@@ -32,14 +32,17 @@ namespace MountedWeapons.CE
     /// mount's stability), spread, lighting, weather, cover and the rest, for the gunner
     /// as the shooter. A mount firing a weapon CE didn't patch keeps vanilla's tooltip,
     /// which is right for it.
+    ///
+    /// A postfix that replaces the text, so other mods' prefixes on the method still run.
+    /// Vanilla's text for a mount is never empty, so CE's own postfix leaves it alone.
     /// </summary>
     [HarmonyPatch(typeof(TooltipUtility), nameof(TooltipUtility.ShotCalculationTipString))]
     public static class Patch_ShotCalculationTipString
     {
-        public static bool Prefix(Thing target, ref string __result)
+        public static void Postfix(Thing target, ref string __result)
         {
-            if (!(Find.Selector.SingleSelectedThing is Building_WeaponMount mount) || mount == target) return true;
-            if (!(mount.AttackVerb is Verb_LaunchProjectileCE verb)) return true;
+            if (!(Find.Selector.SingleSelectedThing is Building_WeaponMount mount) || mount == target) return;
+            if (!(mount.AttackVerb is Verb_LaunchProjectileCE verb)) return;
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine();
@@ -63,7 +66,6 @@ namespace MountedWeapons.CE
                 }
             }
             __result = sb.ToString();
-            return false;
         }
     }
 }

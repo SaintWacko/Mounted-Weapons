@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Combat Extended support for RimWorld 1.6. It references CombatExtended.dll, so it is
+    its own assembly, in Compat/CombatExtended/1.6/Assemblies, which LoadFolders.xml loads
+    only on 1.6 and only when Combat Extended is active. The C# lives one folder up, the
+    same way as the Progression: Ammunition compat, so a 1.7 project can share it once
+    Combat Extended supports 1.7.
+
+    The project reference to the 1.6 main project builds it first and compiles against
+    its output, so this assembly always matches the MountedWeapons.dll it ships beside.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <!-- In case CombatExtended.dll targets a later framework than net472; RimWorld's Mono runs both. -->
+    <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
+    <AssemblyName>MountedWeapons.CombatExtended</AssemblyName>
+    <RootNamespace>MountedWeapons.CE</RootNamespace>
+    <OutputPath>..\..\..\..\Compat\CombatExtended\1.6\Assemblies\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);RW16</DefineConstants>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4871" PrivateAssets="all">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\1.6\Source\MountedWeapons.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="CombatExtended">
+      <HintPath>/Users/tirrella/Library/Application Support/Steam/steamapps/workshop/content/294100/2890901044/Assemblies/CombatExtended.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

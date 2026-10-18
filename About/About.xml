@@ -19,6 +19,7 @@
   <loadAfter>
     <li>brrainz.harmony</li>
     <li>ferny.ProgressionAmmunition</li>
+    <li>CETeam.CombatExtended</li>
   </loadAfter>
   <modVersion>1.0.1</modVersion>
 </ModMetaData>

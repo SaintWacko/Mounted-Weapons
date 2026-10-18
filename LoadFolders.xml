@@ -7,9 +7,12 @@
          Without it the whole automated branch (buildings and research) is skipped. -->
     <li IfModActive="Ludeon.RimWorld.Biotech">Biotech</li>
     <!-- Mounts use and reload ammo when Progression: Ammunition is active. Its assembly
-         references that mod's DLL, so it must never load without it. -->
-    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
-    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition/1.6</li>
+         references that mod's DLL, so it must never load without it. With Combat
+         Extended also active, CE's ammo system takes over and this is skipped. -->
+    <li IfModActive="ferny.ProgressionAmmunition" IfModNotActive="CETeam.CombatExtended">Compat/ProgressionAmmunition</li>
+    <li IfModActive="ferny.ProgressionAmmunition" IfModNotActive="CETeam.CombatExtended">Compat/ProgressionAmmunition/1.6</li>
+    <!-- Combat Extended support. Its assembly references CombatExtended.dll. -->
+    <li IfModActive="CETeam.CombatExtended">Compat/CombatExtended/1.6</li>
   </v1.6>
   <v1.7>
     <li>/</li>
@@ -18,8 +21,10 @@
          Without it the whole automated branch (buildings and research) is skipped. -->
     <li IfModActive="Ludeon.RimWorld.Biotech">Biotech</li>
     <!-- Mounts use and reload ammo when Progression: Ammunition is active. Its assembly
-         references that mod's DLL, so it must never load without it. -->
-    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition</li>
-    <li IfModActive="ferny.ProgressionAmmunition">Compat/ProgressionAmmunition/1.7</li>
+         references that mod's DLL, so it must never load without it. With Combat
+         Extended also active, CE's ammo system takes over and this is skipped. -->
+    <li IfModActive="ferny.ProgressionAmmunition" IfModNotActive="CETeam.CombatExtended">Compat/ProgressionAmmunition</li>
+    <li IfModActive="ferny.ProgressionAmmunition" IfModNotActive="CETeam.CombatExtended">Compat/ProgressionAmmunition/1.7</li>
+    <!-- No Combat Extended support on 1.7 yet: CE ships for 1.6 only. -->
   </v1.7>
 </loadFolders>

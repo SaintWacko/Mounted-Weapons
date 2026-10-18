@@ -29,8 +29,8 @@ namespace MountedWeapons.CE
         /// Empty, or being reloaded. Without this gate the mount kept finding targets and
         /// aiming at them, and CE's reload check on Verb.TryStartCastOn refused every shot
         /// silently, so an empty mount aimed over and over (run #13). CE's own turret does
-        /// not fire while reloading either. CE weapons without a magazine can't be mounted
-        /// (CEMountCombatHandler.IsMountableVerb).
+        /// not fire while reloading either. CE weapons that take ammo but have no magazine
+        /// can't be mounted (CEMountCombatHandler.IsMountableVerb).
         /// </summary>
         public override bool OutOfAmmo(Building_WeaponMount mount)
         {

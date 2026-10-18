@@ -66,6 +66,7 @@ namespace MountedWeapons
             VerbProperties primary = verbs.FirstOrDefault(v => v.isPrimary) ?? verbs[0];
             Type verbClass = primary.verbClass;
             if (verbClass == null || primary.range <= 0f) return false;
+            if (MountCombatHandler.Active != null && MountCombatHandler.Active.IsMountableVerb(primary)) return true;
             if (typeof(Verb_ShootOneUse).IsAssignableFrom(verbClass)) return false;
             if (typeof(Verb_LaunchProjectile).IsAssignableFrom(verbClass)
                 || typeof(Verb_ShootBeam).IsAssignableFrom(verbClass)) return true;

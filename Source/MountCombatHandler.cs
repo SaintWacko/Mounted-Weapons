@@ -42,5 +42,13 @@ namespace MountedWeapons
         /// the shooter, and for a manned turret that is the gunner.
         /// </summary>
         public virtual bool VerbTrainsGunner(Verb verb) => false;
+
+        /// <summary>
+        /// True when a weapon whose primary verb is this one can go on a mount, for verbs the
+        /// vanilla check in MountUtility doesn't know. Combat Extended's guns shoot with its own
+        /// verb class, which doesn't derive from Verb_LaunchProjectile. Asked after the
+        /// item checks (ranged, primary, not a grenade, not neolithic) have passed.
+        /// </summary>
+        public virtual bool IsMountableVerb(VerbProperties primary) => false;
     }
 }

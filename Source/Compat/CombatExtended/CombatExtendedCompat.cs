@@ -79,6 +79,18 @@ namespace MountedWeapons.CE
         public override bool VerbTrainsGunner(Verb verb) => verb is Verb_ShootCE;
 
         /// <summary>
+        /// CE converts guns to Verb_ShootCE, which derives from Verb directly, so the vanilla
+        /// verb check refuses them. Single-use launchers (Verb_ShootCEOneUse and its static
+        /// variant) stay excluded, as their vanilla counterparts are.
+        /// </summary>
+        public override bool IsMountableVerb(VerbProperties primary)
+        {
+            System.Type verbClass = primary.verbClass;
+            return typeof(Verb_ShootCE).IsAssignableFrom(verbClass)
+                && !typeof(Verb_ShootCEOneUse).IsAssignableFrom(verbClass);
+        }
+
+        /// <summary>
         /// CompAmmoUser reads its position and map from <c>turret</c> when it is set, and
         /// sends reload orders to it. The magazine count is saved on the comp, so it stays
         /// with the weapon on and off the mount.

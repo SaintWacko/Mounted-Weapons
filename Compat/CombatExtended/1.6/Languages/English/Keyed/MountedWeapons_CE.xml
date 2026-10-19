@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <!-- Mount inspect pane under Combat Extended. {0} is "rounds left / magazine size". -->
+  <MW_CE_InspectMagazine>Magazine: {0}</MW_CE_InspectMagazine>
+  <!-- {1} is the loaded ammo type, e.g. FMJ. -->
+  <MW_CE_InspectMagazineAmmo>Magazine: {0} ({1})</MW_CE_InspectMagazineAmmo>
+  <!-- {1} is the loaded ammo type, {2} the type picked on the reload button, loaded at the next reload. -->
+  <MW_CE_InspectMagazineNext>Magazine: {0} ({1}, next: {2})</MW_CE_InspectMagazineNext>
+  <!-- A gunner can't reload their mount. {0} is the gunner, {1} the selected ammo, {2} the mount. -->
+  <MW_CE_NoAmmo>{0} has no {1} to reload the {2}.</MW_CE_NoAmmo>
+  <!-- As above, when other ammo types for the weapon are on the map. {3} lists them, e.g. "HE, AP". {4} is MW_CE_ChangeAmmoRightClick or MW_CE_ChangeAmmoClick. -->
+  <MW_CE_NoAmmoOthers>{0} has no {1} to reload the {2}. Available: {3}. {4}</MW_CE_NoAmmoOthers>
+  <!-- Used when Combat Extended's right-click ammo select setting is on (its default). -->
+  <MW_CE_ChangeAmmoRightClick>Right-click the reload button to change the ammo type.</MW_CE_ChangeAmmoRightClick>
+  <MW_CE_ChangeAmmoClick>Click the reload button to change the ammo type.</MW_CE_ChangeAmmoClick>
+  <!-- Manned mount settings tab, in place of MW_Settings_Stability(Hint) while Combat Extended is active. -->
+  <MW_CE_Settings_Stability>Sway removed</MW_CE_Settings_Stability>
+  <MW_CE_Settings_StabilityHint>Share of the weapon's sway the mount removes.</MW_CE_Settings_StabilityHint>
+</LanguageData>

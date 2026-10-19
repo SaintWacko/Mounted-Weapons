@@ -60,6 +60,22 @@ namespace MountedWeapons
         /// <summary>True for the manned line (has CompMannable), false for automated mounts.</summary>
         public bool IsManned => mannableComp != null;
 
+        /// <summary>
+        /// Ticks left on the current aim. Setting it also moves the tick the shot is due on,
+        /// so the weapon fires when the new count runs out instead of starting a second warmup
+        /// (see BeginBurst). Meant for calls made while the mount is firing, which is where
+        /// Combat Extended adds its aimed-shot time and shortens repeat shots.
+        /// </summary>
+        public int WarmupTicksLeft
+        {
+            get => burstWarmupTicksLeft;
+            set
+            {
+                burstWarmupTicksLeft = value;
+                fireReadyTick = value > 0 ? Find.TickManager.TicksGame + value : -1;
+            }
+        }
+
         // The base draws the turret top from the turret gun def's texture. The mount
         // draws the real weapon instead (DrawAt), so the top is drawn clear.
         public override Material TurretTopMaterial => BaseContent.ClearMat;
@@ -197,6 +213,13 @@ namespace MountedWeapons
             // A mount reinstalled from a minified item keeps its clones; settings may have
             // changed while it was packed up.
             RescaleRanges();
+            MountCombatHandler.Active?.Notify_Spawned(this);
+        }
+
+        public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
+        {
+            MountCombatHandler.Active?.Notify_DeSpawned(this);
+            base.DeSpawn(mode);
         }
 
         public override void ExposeData()
@@ -313,6 +336,7 @@ namespace MountedWeapons
             appliedProps.Clear();
             baseRanges.Clear();
             PrepareMountedWeapon();
+            MountCombatHandler.Active?.Notify_WeaponInstalled(this, weapon);
             ResetTargeting();
             burstCooldownTicksLeft = 0;
             if (pendingWeapon == weapon)
@@ -329,6 +353,7 @@ namespace MountedWeapons
         {
             if (!HasWeapon) return null;
             Thing weapon = gun;
+            MountCombatHandler.Active?.Notify_WeaponRemoved(this, weapon);
             CompEquippable eq = weapon.TryGetComp<CompEquippable>();
             if (eq != null)
             {
@@ -392,7 +417,9 @@ namespace MountedWeapons
                 return;
             }
             int now = Find.TickManager.TicksGame;
-            if (fireReadyTick >= 0 && now >= fireReadyTick && now <= fireReadyTick + 2)
+            // One tick early is allowed: WarmupTicksLeft set before the base Tick's countdown
+            // (rather than from inside BeginBurst) runs out one tick sooner.
+            if (fireReadyTick >= 0 && now >= fireReadyTick - 1 && now <= fireReadyTick + 2)
             {
                 Fire();
                 return;
@@ -474,6 +501,7 @@ namespace MountedWeapons
         {
             Pawn gunner = Gunner;
             if (gunner?.skills == null) return;
+            if (MountCombatHandler.Active != null && MountCombatHandler.Active.VerbTrainsGunner(AttackVerb)) return;
             if (!(CurrentTarget.Thing is Pawn target) || target.Downed || target.IsColonyMech) return;
             float xp = target.HostileTo(gunner) ? 170f : 20f;
             xp *= AttackVerb.verbProps.AdjustedFullCycleTime(AttackVerb, gunner);

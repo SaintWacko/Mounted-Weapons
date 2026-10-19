@@ -128,7 +128,11 @@ namespace MountedWeapons
                 Slider(l, "MW_Settings_Range".Translate(), ref t.rangeMultiplier, 1f, 2f, t.rangeMultiplier.ToStringPercent(), null, 0.05f);
                 if (manned)
                 {
-                    Slider(l, "MW_Settings_Stability".Translate(), ref t.stability, 0f, 0.9f, t.stability.ToStringPercent(), "MW_Settings_StabilityHint".Translate(), 0.05f);
+                    // Under Combat Extended stability reduces sway instead (Patch_SwayAmplitude);
+                    // those keys ship in the CE compat's own Keyed file, loaded only with CE.
+                    bool ce = MountCombatHandler.Active != null;
+                    Slider(l, (ce ? "MW_CE_Settings_Stability" : "MW_Settings_Stability").Translate(), ref t.stability, 0f, 0.9f, t.stability.ToStringPercent(),
+                        (ce ? "MW_CE_Settings_StabilityHint" : "MW_Settings_StabilityHint").Translate(), 0.05f);
                 }
                 else
                 {

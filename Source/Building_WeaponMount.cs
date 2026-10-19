@@ -127,6 +127,18 @@ namespace MountedWeapons
             }
         }
 
+        // Building_TurretGun's private PlayerControlled, which decides whether hold fire can
+        // be toggled (mounts are never activable, so that part is left out).
+        private bool HoldFireToggleable
+        {
+            get
+            {
+                Pawn gunner = Gunner;
+                if (gunner != null) return gunner.Faction == Faction.OfPlayer;
+                return Faction == Faction.OfPlayer;
+            }
+        }
+
         private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
         // ---------------------------------------------------------------- firing arc
@@ -313,6 +325,12 @@ namespace MountedWeapons
             {
                 // A forced target walked out of the arc.
                 ResetTargeting();
+            }
+            if (holdAutoFire && !HoldFireToggleable)
+            {
+                // Vanilla clears its own flag the same way once the player loses control,
+                // and hides the toggle, so nobody could switch it back.
+                holdAutoFire = false;
             }
             base.Tick();
             if (avatar && avatarAim >= 0f && !AvatarShooting)
@@ -842,7 +860,8 @@ namespace MountedWeapons
             string holdFireLabel = IsManned ? "CommandHoldFire".Translate().ToString() : null;
             foreach (Gizmo gizmo in base.GetGizmos())
             {
-                if (holdFireLabel != null && gizmo is Command_Toggle toggle && toggle.defaultLabel == holdFireLabel)
+                if (holdFireLabel != null && gizmo is Command_Toggle toggle && toggle.hotKey == KeyBindingDefOf.Misc6
+                    && toggle.defaultLabel == holdFireLabel)
                 {
                     // The base toggle is bound to its own flag; a manned mount uses holdAutoFire.
                     toggle.isActive = () => HoldFire;

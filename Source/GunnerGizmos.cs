@@ -506,7 +506,12 @@ namespace MountedWeapons
                 foreach (object obj in Find.Selector.SelectedObjects)
                 {
                     if (!(obj is Pawn pawn) || pawn.Drafted || !GunnerUtility.CanOrder(pawn)) continue;
-                    GunnerUtility.ArmedMountOf(pawn)?.OrderAttack(target);
+                    Building_WeaponMount mount = GunnerUtility.ArmedMountOf(pawn);
+                    if (mount == null) continue;
+                    // The same checks a drafted gunner's order goes through, with vanilla's message.
+                    Action attack = GunnerUtility.MountAttackAction(pawn, mount, target, out string failStr);
+                    if (attack != null) attack();
+                    else if (!failStr.NullOrEmpty()) Messages.Message(failStr, target.Thing, MessageTypeDefOf.RejectInput, historical: false);
                 }
             };
             command.onUpdate = target =>

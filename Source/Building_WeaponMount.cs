@@ -91,18 +91,39 @@ namespace MountedWeapons
         private static readonly AccessTools.FieldRef<Building_TurretGun, bool> holdFireRef =
             AccessTools.FieldRefAccess<Building_TurretGun, bool>("holdFire");
 
+        // A manned mount's hold fire. The base class's own flag stops forced targets too
+        // (TryStartShootSomething, which isn't virtual, returns before reading one), but
+        // on a manned mount it is the gunner's fire at will, and a pawn with fire at will
+        // off still takes ordered shots. So a manned mount keeps the base flag clear and
+        // uses this one, which only TryFindNewTarget reads.
+        private bool holdAutoFire;
+
         /// <summary>
-        /// The base class's private hold-fire flag, for the gunner's fire-at-will toggle.
-        /// Setting it clears the forced target, as the mount's own Hold fire toggle does.
+        /// Hold fire, as the mount's Hold fire toggle and the gunner's fire-at-will toggle
+        /// show it. On a manned mount it stops the mount picking targets itself; ordered
+        /// targets still fire. On an automated mount it is the vanilla turret flag, which
+        /// stops every shot and clears the forced target.
         /// </summary>
         public bool HoldFire
         {
-            get => holdFireRef(this);
+            get => IsManned ? holdAutoFire : holdFireRef(this);
             set
             {
-                holdFireRef(this) = value;
-                // With an invalid target the base only clears the forced target.
-                if (value) base.OrderAttack(LocalTargetInfo.Invalid);
+                if (!IsManned)
+                {
+                    holdFireRef(this) = value;
+                    // With an invalid target the base only clears the forced target.
+                    if (value) base.OrderAttack(LocalTargetInfo.Invalid);
+                    return;
+                }
+                holdAutoFire = value;
+                if (value && currentTargetInt.IsValid && currentTargetInt != forcedTarget && !AttackVerb.Bursting)
+                {
+                    // Drops a target the mount picked itself and is still aiming at.
+                    currentTargetInt = LocalTargetInfo.Invalid;
+                    burstWarmupTicksLeft = 0;
+                    fireReadyTick = -1;
+                }
             }
         }
 
@@ -126,6 +147,8 @@ namespace MountedWeapons
         {
             // The inhabited pawn fires only when the player clicks (TryAvatarFire).
             if (AvatarControlled) return LocalTargetInfo.Invalid;
+            // Hold fire on a manned mount: forced targets never come through here.
+            if (IsManned && holdAutoFire) return LocalTargetInfo.Invalid;
             if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return LocalTargetInfo.Invalid;
             if (FiringArc.Unlimited(Arc) || !HasWeapon) return base.TryFindNewTarget();
             // Same search as the base, with the arc added to its validator. The base's
@@ -243,6 +266,12 @@ namespace MountedWeapons
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
+            if (IsManned && holdFireRef(this))
+            {
+                // Saved before manned mounts had their own flag (or set by another mod).
+                holdFireRef(this) = false;
+                holdAutoFire = true;
+            }
             PrepareMountedWeapon();
             // A mount reinstalled from a minified item keeps its clones; settings may have
             // changed while it was packed up.
@@ -261,6 +290,7 @@ namespace MountedWeapons
             base.ExposeData();
             Scribe_References.Look(ref pendingWeapon, "pendingWeapon");
             Scribe_Values.Look(ref fireReadyTick, "fireReadyTick", -1);
+            Scribe_Values.Look(ref holdAutoFire, "holdAutoFire", false);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 // The base already rebound caster and callback; this adds the range clones.
@@ -809,8 +839,16 @@ namespace MountedWeapons
 
         public override IEnumerable<Gizmo> GetGizmos()
         {
+            string holdFireLabel = IsManned ? "CommandHoldFire".Translate().ToString() : null;
             foreach (Gizmo gizmo in base.GetGizmos())
             {
+                if (holdFireLabel != null && gizmo is Command_Toggle toggle && toggle.defaultLabel == holdFireLabel)
+                {
+                    // The base toggle is bound to its own flag; a manned mount uses holdAutoFire.
+                    toggle.isActive = () => HoldFire;
+                    toggle.toggleAction = () => HoldFire = !HoldFire;
+                    toggle.defaultDesc = "MW_CommandHoldFireMannedDesc".Translate();
+                }
                 yield return gizmo;
             }
             if (Faction != Faction.OfPlayer) yield break;

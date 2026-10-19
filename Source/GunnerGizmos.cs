@@ -92,6 +92,68 @@ namespace MountedWeapons
             return command;
         }
 
+        /// <summary>
+        /// A gunner's ranged attack order: vanilla's FloatMenuUtility.GetRangedAttackAction
+        /// with the mount's verb, position and arc in place of the pawn's own weapon, and no
+        /// drafted check (a gunner fires either way). The order goes to the mount, so the
+        /// gunner stays on it.
+        /// </summary>
+        public static Action MountAttackAction(Pawn pawn, Building_WeaponMount mount, LocalTargetInfo target, out string failStr)
+        {
+            failStr = "";
+            Verb verb = mount.AttackVerb;
+            if (!CanOrder(pawn))
+            {
+                failStr = "CannotOrderNonControlledLower".Translate();
+            }
+            else if (pawn.IsColonyMechPlayerControlled && target.IsValid && !MechanitorUtility.InMechanitorCommandRange(pawn, target))
+            {
+                failStr = "OutOfCommandRange".Translate();
+            }
+            else if (target.IsValid && !mount.InArc(target))
+            {
+                failStr = "MW_OutsideArc".Translate();
+            }
+            else if (target.IsValid && !verb.CanHitTarget(target))
+            {
+                if (!mount.Position.InHorDistOf(target.Cell, verb.EffectiveRange))
+                {
+                    failStr = "OutOfRange".Translate();
+                }
+                else
+                {
+                    float minRange = verb.verbProps.EffectiveMinRange(target, mount);
+                    failStr = mount.Position.DistanceToSquared(target.Cell) < minRange * minRange
+                        ? "TooClose".Translate()
+                        : "CannotHitTarget".Translate();
+                }
+            }
+            else if (pawn == target.Thing || mount == target.Thing)
+            {
+                failStr = "CannotAttackSelf".Translate();
+            }
+            else if (target.Thing is Pawn other && (pawn.InSameExtraFaction(other, ExtraFactionType.HomeFaction) || pawn.InSameExtraFaction(other, ExtraFactionType.MiniFaction)))
+            {
+                failStr = "CannotAttackSameFactionMember".Translate();
+            }
+            else if (target.Thing is Pawn victim && HistoryEventUtility.IsKillingInnocentAnimal(pawn, victim)
+                && !new HistoryEvent(HistoryEventDefOf.KilledInnocentAnimal, pawn.Named(HistoryEventArgsNames.Doer)).DoerWillingToDo())
+            {
+                failStr = "IdeoligionForbids".Translate();
+            }
+            else if (target.Thing is Pawn animal && pawn.Ideo != null && pawn.Ideo.IsVeneratedAnimal(animal)
+                && !new HistoryEvent(HistoryEventDefOf.HuntedVeneratedAnimal, pawn.Named(HistoryEventArgsNames.Doer)).DoerWillingToDo())
+            {
+                failStr = "IdeoligionForbids".Translate();
+            }
+            else
+            {
+                return () => mount.OrderAttack(target);
+            }
+            failStr = failStr.CapitalizeFirst();
+            return null;
+        }
+
         public static Command_Toggle FireAtWillToggle(Building_WeaponMount mount)
         {
             return new Command_Toggle
@@ -157,26 +219,47 @@ namespace MountedWeapons
     /// One targeting session shared by every gunner's fire button in a multi-selection. The
     /// targeter takes one verb: the first mount's. Vanilla's targeter orders that mount
     /// through OrderAttack, and the mount passes the same target to the others here.
+    ///
+    /// The targeter is told not to stop when its caster isn't selected (the mount never
+    /// is; its gunner is), so this class does that check instead, against the gunner:
+    /// a gunner who is deselected or leaves the mount drops out, and when the leading
+    /// gunner does, the next one takes over, or targeting ends if none is left.
     /// </summary>
     public static class GunnerTargeting
     {
+        private struct Entry
+        {
+            public Building_WeaponMount mount;
+            public Pawn gunner;
+
+            public bool StillValid =>
+                gunner != null && Find.Selector.IsSelected(gunner) && GunnerUtility.ArmedMountOf(gunner) == mount;
+        }
+
         private static Verb leaderVerb;
-        private static readonly List<Building_WeaponMount> others = new List<Building_WeaponMount>();
-        private static readonly List<Building_WeaponMount> tmp = new List<Building_WeaponMount>();
+        private static Entry leaderEntry;
+        private static readonly List<Entry> others = new List<Entry>();
+        private static readonly List<Entry> tmp = new List<Entry>();
 
         private static bool SessionActive =>
             leaderVerb != null && Find.Targeter.IsTargeting && (object)Find.Targeter.targetingSource == leaderVerb;
 
         public static void Add(Building_WeaponMount mount)
         {
+            Entry entry = new Entry { mount = mount, gunner = mount.Gunner };
             if (SessionActive)
             {
-                if (mount.AttackVerb != leaderVerb && !others.Contains(mount)) others.Add(mount);
+                if (mount.AttackVerb == leaderVerb) return;
+                for (int i = 0; i < others.Count; i++)
+                {
+                    if (others[i].mount == mount) return;
+                }
+                others.Add(entry);
                 return;
             }
             Clear();
             leaderVerb = mount.AttackVerb;
-            // The mount isn't selected (its gunner is), so the targeter must not stop for that.
+            leaderEntry = entry;
             Find.Targeter.BeginTargeting(mount.AttackVerb, null, allowNonSelectedTargetingSource: true,
                 null, Clear, requiresAvailableVerb: false);
         }
@@ -184,7 +267,37 @@ namespace MountedWeapons
         public static void Clear()
         {
             leaderVerb = null;
+            leaderEntry = default;
             others.Clear();
+        }
+
+        /// <summary>
+        /// Runs before the targeter reads input (Targeter.ProcessInputEvents), so a click
+        /// after a gunner was deselected never reaches that gunner's mount.
+        /// </summary>
+        public static void Validate()
+        {
+            if (leaderVerb == null) return;
+            if (!SessionActive)
+            {
+                // Another targeter took over without ending ours.
+                Clear();
+                return;
+            }
+            for (int i = others.Count - 1; i >= 0; i--)
+            {
+                if (!others[i].StillValid) others.RemoveAt(i);
+            }
+            if (leaderEntry.StillValid) return;
+            tmp.Clear();
+            tmp.AddRange(others);
+            // Runs Clear through actionWhenFinished.
+            Find.Targeter.StopTargeting();
+            for (int i = 0; i < tmp.Count; i++)
+            {
+                Add(tmp[i].mount);
+            }
+            tmp.Clear();
         }
 
         /// <summary>Called from the mount's OrderAttack; does nothing outside a session it leads.</summary>
@@ -196,11 +309,17 @@ namespace MountedWeapons
             others.Clear();
             for (int i = 0; i < tmp.Count; i++)
             {
-                Building_WeaponMount mount = tmp[i];
-                if (mount.Spawned && mount.Map == leader.Map && mount.HasWeapon) mount.OrderAttack(target);
+                Building_WeaponMount mount = tmp[i].mount;
+                if (tmp[i].StillValid && mount.Map == leader.Map) mount.OrderAttack(target);
             }
             tmp.Clear();
         }
+    }
+
+    [HarmonyPatch(typeof(Targeter), nameof(Targeter.ProcessInputEvents))]
+    public static class Patch_Targeter_ProcessInputEvents
+    {
+        public static void Prefix() => GunnerTargeting.Validate();
     }
 
     /// <summary>
@@ -370,7 +489,7 @@ namespace MountedWeapons
 
     /// <summary>
     /// Squad attack. Vanilla orders each selected drafted pawn through
-    /// FloatMenuUtility.GetAttackAction, which the next patch sends to a drafted gunner's
+    /// FloatMenuUtility.GetAttackAction, which the patches below send to a drafted gunner's
     /// mount. Undrafted gunners are added here, since a gunner is armed either way, and
     /// the hover draws each gunner's firing field in place of their own weapon's range.
     /// </summary>
@@ -425,20 +544,33 @@ namespace MountedWeapons
     }
 
     /// <summary>
-    /// The attack order behind squad attack. For a gunner it becomes an order to the mount,
-    /// so the gunner stays on it. The mount turns down targets outside its arc or range
-    /// with its own message. A postfix: vanilla's choice has no side effects and is
-    /// simply overwritten.
+    /// Vanilla's attack orders (squad attack, the drafted right-click "Fire at" option, and
+    /// mods that call the same helpers) pick ranged or melee with UseRangedAttack and build
+    /// the ranged order with GetRangedAttackAction. A gunner counts as holding a ranged
+    /// weapon even when their own is a melee weapon or none.
     /// </summary>
-    [HarmonyPatch(typeof(FloatMenuUtility), nameof(FloatMenuUtility.GetAttackAction))]
-    public static class Patch_FloatMenuUtility_GetAttackAction
+    [HarmonyPatch(typeof(FloatMenuUtility), nameof(FloatMenuUtility.UseRangedAttack))]
+    public static class Patch_FloatMenuUtility_UseRangedAttack
+    {
+        public static void Postfix(Pawn pawn, ref bool __result)
+        {
+            if (!__result && GunnerUtility.ArmedMountOf(pawn) != null) __result = true;
+        }
+    }
+
+    /// <summary>
+    /// For a gunner the ranged order goes to the mount (GunnerUtility.MountAttackAction),
+    /// so the gunner stays on it. A postfix: vanilla's checks and action have no side
+    /// effects and are simply overwritten.
+    /// </summary>
+    [HarmonyPatch(typeof(FloatMenuUtility), nameof(FloatMenuUtility.GetRangedAttackAction))]
+    public static class Patch_FloatMenuUtility_GetRangedAttackAction
     {
         public static void Postfix(Pawn pawn, LocalTargetInfo target, ref string failStr, ref Action __result)
         {
             Building_WeaponMount mount = GunnerUtility.ArmedMountOf(pawn);
             if (mount == null) return;
-            failStr = null;
-            __result = () => mount.OrderAttack(target);
+            __result = GunnerUtility.MountAttackAction(pawn, mount, target, out failStr);
         }
     }
 

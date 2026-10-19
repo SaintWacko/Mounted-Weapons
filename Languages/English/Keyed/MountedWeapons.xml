@@ -13,6 +13,9 @@
   <MW_MountCannotFireNow>The mount can't fire at that right now.</MW_MountCannotFireNow>
   <!-- Gunner's fire button. {0} is the mount, e.g. "manned emplacement". -->
   <MW_GunnerFireDesc>Fired from the {0}.</MW_GunnerFireDesc>
+  <!-- Shown after an attack option, e.g. "Fire at raider: outside firing arc". -->
+  <MW_OutsideArc>outside firing arc</MW_OutsideArc>
+  <MW_CommandHoldFireMannedDesc>The gunner stops picking targets on their own. Targets you order are still fired at.</MW_CommandHoldFireMannedDesc>
   <!-- Progression: Education. {REASON} is that mod's own text, e.g. "Colonist must be taught firearm proficiency." -->
   <MW_GunnerCannotFire>{PAWN_labelShort} stopped manning: {PAWN_pronoun} can't fire the {WEAPON_label}. {REASON}</MW_GunnerCannotFire>
 

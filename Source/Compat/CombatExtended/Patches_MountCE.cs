@@ -35,19 +35,28 @@ namespace MountedWeapons.CE
     ///
     /// A postfix that replaces the text, so other mods' prefixes on the method still run.
     /// Vanilla's text for a mount is never empty, so CE's own postfix leaves it alone.
+    ///
+    /// With the mount's gunner selected the readout is the same, headed with the gunner's
+    /// name, and a target outside the firing arc reads as one the gunner can't hit. The main
+    /// assembly's gunner tooltip (Patch_TooltipUtility_ShotCalculationTipString_Gunner) runs
+    /// earlier and is replaced here.
     /// </summary>
     [HarmonyPatch(typeof(TooltipUtility), nameof(TooltipUtility.ShotCalculationTipString))]
     public static class Patch_ShotCalculationTipString
     {
         public static void Postfix(Thing target, ref string __result)
         {
-            if (!(Find.Selector.SingleSelectedThing is Building_WeaponMount mount) || mount == target) return;
+            Thing selected = Find.Selector.SingleSelectedThing;
+            Pawn gunner = selected as Pawn;
+            Building_WeaponMount mount = selected as Building_WeaponMount ?? GunnerUtility.ArmedMountOf(gunner);
+            if (mount == null || mount == target || selected == target) return;
             if (!(mount.AttackVerb is Verb_LaunchProjectileCE verb)) return;
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine();
-            sb.Append("ShotBy".Translate(mount.LabelShort, mount).Resolve() + ":\n");
-            if (verb.CanHitTarget(new LocalTargetInfo(target), out string report))
+            sb.Append("ShotBy".Translate(selected.LabelShort, selected).Resolve() + ":\n");
+            string report = null;
+            if ((gunner == null || mount.InArc(target)) && verb.CanHitTarget(new LocalTargetInfo(target), out report))
             {
                 sb.Append(verb.ShiftVecReportFor(new LocalTargetInfo(target)).GetTextReadout());
             }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -87,6 +88,24 @@ namespace MountedWeapons
 
         protected override bool HideForceTargetGizmo => !HasWeapon || AvatarControlled;
 
+        private static readonly AccessTools.FieldRef<Building_TurretGun, bool> holdFireRef =
+            AccessTools.FieldRefAccess<Building_TurretGun, bool>("holdFire");
+
+        /// <summary>
+        /// The base class's private hold-fire flag, for the gunner's fire-at-will toggle.
+        /// Setting it clears the forced target, as the mount's own Hold fire toggle does.
+        /// </summary>
+        public bool HoldFire
+        {
+            get => holdFireRef(this);
+            set
+            {
+                holdFireRef(this) = value;
+                // With an invalid target the base only clears the forced target.
+                if (value) base.OrderAttack(LocalTargetInfo.Invalid);
+            }
+        }
+
         private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
         // ---------------------------------------------------------------- firing arc
@@ -168,13 +187,8 @@ namespace MountedWeapons
             Blueprint_Install blueprint = InstallBlueprintUtility.ExistingBlueprintFor(this);
             if (blueprint != null) GenDraw.DrawLineBetween(this.TrueCenter(), blueprint.TrueCenter());
 
-            FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
-            if (HasWeapon)
-            {
-                // The minimum range stays a full ring: it's where the gun can't fire at all.
-                float minRange = AttackVerb.verbProps.EffectiveMinRange(allowAdjacentShot: true);
-                if (minRange > 0.1f && minRange < 90f && minRange < radius) GenDraw.DrawRadiusRing(Position, minRange);
-            }
+            if (HasWeapon) DrawFireField();
+            else FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
             if (burstWarmupTicksLeft > 0)
             {
                 GenDraw.DrawAimPie(this, CurrentTarget, (int)(burstWarmupTicksLeft * 0.5f), def.size.x * 0.5f);
@@ -187,6 +201,26 @@ namespace MountedWeapons
                 a.y = b.y;
                 GenDraw.DrawLineBetween(a, b, ForcedTargetLineMat);
             }
+        }
+
+        /// <summary>
+        /// Where the weapon can fire: the arc out to its range, or the full range ring for an
+        /// unlimited arc. Drawn when the mount is selected and when the player hovers a
+        /// gunner's fire button.
+        /// </summary>
+        public void DrawFireField()
+        {
+            if (!HasWeapon) return;
+            if (FiringArc.Unlimited(Arc))
+            {
+                AttackVerb.verbProps.DrawRadiusRing(Position, AttackVerb);
+                return;
+            }
+            float radius = AttackVerb.EffectiveRange;
+            FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
+            // The minimum range stays a full ring: it's where the gun can't fire at all.
+            float minRange = AttackVerb.verbProps.EffectiveMinRange(allowAdjacentShot: true);
+            if (minRange > 0.1f && minRange < 90f && minRange < radius) GenDraw.DrawRadiusRing(Position, minRange);
         }
 
         private void RescaleRanges()
@@ -457,9 +491,22 @@ namespace MountedWeapons
             // A new order restarts aiming; a warmup that was about to finish must not
             // carry over to the new target. Compared after the base runs, because the
             // base turns down out-of-range orders without changing the target.
+            // Several gunners' fire buttons clicked at once share one targeter, led by this
+            // mount; the others get the same target.
+            GunnerTargeting.OrderOthers(this, targ);
             if (targ.IsValid && !InArc(targ))
             {
                 Messages.Message("MW_TargetOutsideArc".Translate(), this, MessageTypeDefOf.RejectInput, historical: false);
+                return;
+            }
+            if (AvatarControlled)
+            {
+                // Perspective Shift's avatar has no forced target (CanSetForcedTarget): its
+                // fire button fires one burst, as a click on the target does.
+                if (targ.IsValid && !TryAvatarFire(targ))
+                {
+                    Messages.Message("MW_MountCannotFireNow".Translate(), this, MessageTypeDefOf.RejectInput, historical: false);
+                }
                 return;
             }
             LocalTargetInfo before = forcedTarget;

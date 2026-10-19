@@ -128,6 +128,10 @@ namespace MountedWeapons
                         : "CannotHitTarget".Translate();
                 }
             }
+            else if (pawn.WorkTagIsDisabled(WorkTags.Violent))
+            {
+                failStr = "IsIncapableOfViolenceLower".Translate(pawn.LabelShort, pawn);
+            }
             else if (pawn == target.Thing || mount == target.Thing)
             {
                 failStr = "CannotAttackSelf".Translate();

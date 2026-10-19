@@ -298,25 +298,32 @@ namespace MountedWeapons
             foreach (string name in Names) yield return AccessTools.Method(typeof(PawnAttackGizmoUtility), name);
         }
 
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
         {
             MethodInfo primary = AccessTools.PropertyGetter(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.Primary));
             MethodInfo primaryEq = AccessTools.PropertyGetter(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.PrimaryEq));
             MethodInfo effective = AccessTools.Method(typeof(GunnerUtility), nameof(GunnerUtility.EffectivePrimary));
             MethodInfo effectiveEq = AccessTools.Method(typeof(GunnerUtility), nameof(GunnerUtility.EffectivePrimaryEq));
+            int swapped = 0;
             foreach (CodeInstruction ins in instructions)
             {
                 if (ins.Calls(primary))
                 {
                     ins.opcode = OpCodes.Call;
                     ins.operand = effective;
+                    swapped++;
                 }
                 else if (ins.Calls(primaryEq))
                 {
                     ins.opcode = OpCodes.Call;
                     ins.operand = effectiveEq;
+                    swapped++;
                 }
                 yield return ins;
+            }
+            if (swapped == 0)
+            {
+                Log.Warning("[Mounted Weapons] PawnAttackGizmoUtility." + original?.Name + " has changed; gunners selected together may show the wrong attack buttons.");
             }
         }
     }
@@ -325,16 +332,17 @@ namespace MountedWeapons
     /// Vanilla's "different weapons" test, which decides between showing everyone's weapon
     /// buttons and showing squad attack. A gunner counts as holding the mounted weapon, but
     /// as a different weapon from the same kind held in hand: the two buttons target with
-    /// different verbs and can't be merged into one click. Replaces the private method; the
-    /// body is vanilla's with that one change.
+    /// different verbs and can't be merged into one click. A postfix that recomputes the
+    /// answer with vanilla's loop and that one change; vanilla's body only reads the
+    /// selection, so running it first costs nothing else.
     /// </summary>
     [HarmonyPatch(typeof(PawnAttackGizmoUtility), "AtLeastTwoSelectedPlayerPawnsHaveDifferentWeapons")]
     public static class Patch_PawnAttackGizmoUtility_DifferentWeapons
     {
-        public static bool Prefix(ref bool __result)
+        public static void Postfix(ref bool __result)
         {
             __result = false;
-            if (Find.Selector.NumSelected <= 1) return false;
+            if (Find.Selector.NumSelected <= 1) return;
             ThingDef firstDef = null;
             bool firstMounted = false;
             bool any = false;
@@ -354,10 +362,9 @@ namespace MountedWeapons
                 else if (def != firstDef || mounted != firstMounted)
                 {
                     __result = true;
-                    return false;
+                    return;
                 }
             }
-            return false;
         }
     }
 
@@ -420,18 +427,18 @@ namespace MountedWeapons
     /// <summary>
     /// The attack order behind squad attack. For a gunner it becomes an order to the mount,
     /// so the gunner stays on it. The mount turns down targets outside its arc or range
-    /// with its own message.
+    /// with its own message. A postfix: vanilla's choice has no side effects and is
+    /// simply overwritten.
     /// </summary>
     [HarmonyPatch(typeof(FloatMenuUtility), nameof(FloatMenuUtility.GetAttackAction))]
     public static class Patch_FloatMenuUtility_GetAttackAction
     {
-        public static bool Prefix(Pawn pawn, LocalTargetInfo target, ref string failStr, ref Action __result)
+        public static void Postfix(Pawn pawn, LocalTargetInfo target, ref string failStr, ref Action __result)
         {
             Building_WeaponMount mount = GunnerUtility.ArmedMountOf(pawn);
-            if (mount == null) return true;
+            if (mount == null) return;
             failStr = null;
             __result = () => mount.OrderAttack(target);
-            return false;
         }
     }
 

@@ -77,7 +77,15 @@ namespace MountedWeapons
                 requiresAvailableVerb = false
             };
             Verb verb = mount.AttackVerb;
-            if (verb.ProjectileFliesOverhead() && mount.Position.Roofed(mount.Map))
+            Pawn gunner = mount.Gunner;
+            // Vanilla VerbTracker disables a pawn's own fire button the same way. The mount
+            // bases need Violent work to man, so this only shows for a pawn who lost violence
+            // while already on the mount; MountAttackAction blocks the other order paths.
+            if (gunner != null && gunner.WorkTagIsDisabled(WorkTags.Violent))
+            {
+                command.Disable("IsIncapableOfViolence".Translate(gunner.LabelShort, gunner));
+            }
+            else if (verb.ProjectileFliesOverhead() && mount.Position.Roofed(mount.Map))
             {
                 command.Disable("CannotFire".Translate() + ": " + "Roofed".Translate().CapitalizeFirst());
             }

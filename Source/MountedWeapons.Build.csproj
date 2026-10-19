@@ -14,10 +14,6 @@
     <TargetFramework>net472</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>MountedWeapons.Build</AssemblyName>
-    <!-- The 1.7 projects compile against the installed 1.7 game. When it is not on disk
-         (Steam switched back to 1.6), they are skipped and the 1.7 DLLs already in
-         1.7/Assemblies are left as they are. -->
-    <RW17Managed>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/Assembly-CSharp.dll</RW17Managed>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
@@ -26,7 +22,7 @@
     <ProjectReference Include="Compat\ProgressionAmmunition\1.6\MountedWeapons.ProgressionAmmunition.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="Compat\ProgressionAmmunition\1.7\MountedWeapons.ProgressionAmmunition.csproj" Condition="Exists('$(RW17Managed)')">
+    <ProjectReference Include="Compat\ProgressionAmmunition\1.7\MountedWeapons.ProgressionAmmunition.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <!-- Combat Extended ships for 1.6 only, so there is no 1.7 project yet. -->
@@ -34,7 +30,4 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
-  <Target Name="ReportSkipped17" BeforeTargets="Build" Condition="!Exists('$(RW17Managed)')">
-    <Message Importance="high" Text="RimWorld 1.7 is not installed: skipped the 1.7 projects. 1.7/Assemblies keeps its last build." />
-  </Target>
 </Project>

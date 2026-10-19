@@ -400,6 +400,10 @@ namespace MountedWeapons
     /// it decides whether the melee and squad attack buttons show and whether squad attack
     /// can target the ground. The Primary calls are swapped for GunnerUtility's, which
     /// leaves the stack as it was.
+    /// AllSelectedPlayerPawnsCanTargetLocations also asks only drafted pawns, while squad
+    /// attack orders undrafted gunners too (Patch_PawnAttackGizmoUtility_SquadAttack). Its
+    /// pawn.Drafted call is swapped for GunnerUtility.PortraitDrafted (drafted or manning),
+    /// so a gunner whose mounted weapon can't target the ground rules ground targets out.
     /// </summary>
     [HarmonyPatch]
     public static class Patch_PawnAttackGizmoUtility_GunnerWeapon
@@ -435,10 +439,20 @@ namespace MountedWeapons
             MethodInfo primaryEq = AccessTools.PropertyGetter(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.PrimaryEq));
             MethodInfo effective = AccessTools.Method(typeof(GunnerUtility), nameof(GunnerUtility.EffectivePrimary));
             MethodInfo effectiveEq = AccessTools.Method(typeof(GunnerUtility), nameof(GunnerUtility.EffectivePrimaryEq));
+            MethodInfo drafted = AccessTools.PropertyGetter(typeof(Pawn), nameof(Pawn.Drafted));
+            MethodInfo draftedOrManning = AccessTools.Method(typeof(GunnerUtility), nameof(GunnerUtility.PortraitDrafted));
+            bool swapDrafted = original?.Name == "AllSelectedPlayerPawnsCanTargetLocations";
             int swapped = 0;
+            int draftedSwapped = 0;
             foreach (CodeInstruction ins in instructions)
             {
-                if (ins.Calls(primary))
+                if (swapDrafted && ins.Calls(drafted))
+                {
+                    ins.opcode = OpCodes.Call;
+                    ins.operand = draftedOrManning;
+                    draftedSwapped++;
+                }
+                else if (ins.Calls(primary))
                 {
                     ins.opcode = OpCodes.Call;
                     ins.operand = effective;
@@ -455,6 +469,10 @@ namespace MountedWeapons
             if (swapped == 0)
             {
                 Log.Warning("[Mounted Weapons] PawnAttackGizmoUtility." + original?.Name + " has changed; gunners selected together may show the wrong attack buttons.");
+            }
+            if (swapDrafted && draftedSwapped == 0)
+            {
+                Log.Warning("[Mounted Weapons] PawnAttackGizmoUtility." + original?.Name + " has changed; squad attack may offer ground targets to undrafted gunners whose weapon can't fire at the ground.");
             }
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
 using RimWorld;
@@ -55,6 +56,24 @@ namespace MountedWeapons
         public bool HasWeapon => gun != null && gun.def != def.building.turretGunDef;
 
         public Thing MountedWeapon => HasWeapon ? gun : null;
+
+        // Weapon -> the mount holding it. A gun inside a turret has no holdingOwner, so
+        // nothing in vanilla can answer "is this weapon on a mount?", and the ammo
+        // capacity hooks (CE's magazine stat, P:A's MaxAmmo) only see the weapon. Weak
+        // keys, so a weapon destroyed or left behind in an unloaded game is never kept
+        // alive by this table; thread-safe, so a stat read off the main thread is fine.
+        private static readonly ConditionalWeakTable<Thing, Building_WeaponMount> holders =
+            new ConditionalWeakTable<Thing, Building_WeaponMount>();
+
+        /// <summary>
+        /// The mount this weapon is installed on, or null. An entry left over from a mount
+        /// that has since let go of the weapon is ignored by the gun check.
+        /// </summary>
+        public static Building_WeaponMount HoldingMount(Thing weapon)
+        {
+            if (weapon == null || !holders.TryGetValue(weapon, out Building_WeaponMount mount)) return null;
+            return mount.gun == weapon ? mount : null;
+        }
 
         public Pawn Gunner => mannableComp?.ManningPawn;
 
@@ -139,7 +158,7 @@ namespace MountedWeapons
             }
         }
 
-        private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
+        public IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
         // ---------------------------------------------------------------- firing arc
 
@@ -269,6 +288,10 @@ namespace MountedWeapons
         public void Notify_SettingsChanged()
         {
             RescaleRanges();
+            if (HasWeapon)
+            {
+                MountAmmoHandler.Active?.Notify_CapacityChanged(this, gun);
+            }
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
                 ResetTargeting();
@@ -419,6 +442,7 @@ namespace MountedWeapons
             baseRanges.Clear();
             PrepareMountedWeapon();
             MountCombatHandler.Active?.Notify_WeaponInstalled(this, weapon);
+            MountAmmoHandler.Active?.Notify_CapacityChanged(this, weapon);
             ResetTargeting();
             burstCooldownTicksLeft = 0;
             if (pendingWeapon == weapon)
@@ -436,6 +460,7 @@ namespace MountedWeapons
             if (!HasWeapon) return null;
             Thing weapon = gun;
             MountCombatHandler.Active?.Notify_WeaponRemoved(this, weapon);
+            holders.Remove(weapon);
             CompEquippable eq = weapon.TryGetComp<CompEquippable>();
             if (eq != null)
             {
@@ -447,12 +472,18 @@ namespace MountedWeapons
             appliedProps.Clear();
             baseRanges.Clear();
             ResetTargeting();
+            // After the gun swap, so the weapon's capacity is back to its own when the
+            // handler trims the ammo above it.
+            MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
             return weapon;
         }
 
         private void PrepareMountedWeapon()
         {
             if (!HasWeapon) return;
+            // Runs on install, spawn and load, so the table is rebuilt from the save.
+            holders.Remove(gun);
+            holders.Add(gun, this);
             CompEquippable eq = gun.TryGetComp<CompEquippable>();
             if (eq == null) return;
             List<Verb> verbs = eq.AllVerbs;

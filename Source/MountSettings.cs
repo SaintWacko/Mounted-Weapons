@@ -14,12 +14,18 @@ namespace MountedWeapons
         public float warmupFactor = 1f;
         /// <summary>Automated mounts only: ShootingAccuracyTurret.</summary>
         public float turretAccuracy = 0.96f;
+        /// <summary>
+        /// Ammo capacity multiplier. Negative only straight after loading settings saved
+        /// before this existed; MountSettingsStartup fills it from the def.
+        /// </summary>
+        public float ammoCapacity = 1f;
 
         public MountTuning Copy() => (MountTuning)MemberwiseClone();
 
         public bool SameAs(MountTuning o) =>
             rangeMultiplier == o.rangeMultiplier && stability == o.stability
-            && warmupFactor == o.warmupFactor && turretAccuracy == o.turretAccuracy;
+            && warmupFactor == o.warmupFactor && turretAccuracy == o.turretAccuracy
+            && ammoCapacity == o.ammoCapacity;
 
         public void ExposeData()
         {
@@ -27,6 +33,9 @@ namespace MountedWeapons
             Scribe_Values.Look(ref stability, "stability", 0f);
             Scribe_Values.Look(ref warmupFactor, "aim", 1f);
             Scribe_Values.Look(ref turretAccuracy, "accuracy", 0.96f);
+            // Missing from older settings files. A 1 here would take the bonus away from
+            // every mount the player had already tuned, so it's filled from the def instead.
+            Scribe_Values.Look(ref ammoCapacity, "ammo", -1f);
         }
     }
 
@@ -96,6 +105,7 @@ namespace MountedWeapons
                 ext.rangeMultiplier = t.rangeMultiplier;
                 ext.stability = t.stability;
                 ext.warmupFactor = t.warmupFactor;
+                ext.ammoCapacityFactor = t.ammoCapacity;
                 if (!IsManned(def))
                 {
                     StatUtility.SetStatValueInList(ref def.statBases, StatDefOf.ShootingAccuracyTurret, t.turretAccuracy);
@@ -143,7 +153,15 @@ namespace MountedWeapons
                     stability = ext.stability,
                     warmupFactor = ext.warmupFactor,
                     turretAccuracy = def.GetStatValueAbstract(StatDefOf.ShootingAccuracyTurret),
+                    ammoCapacity = ext.ammoCapacityFactor,
                 };
+            }
+            foreach (KeyValuePair<string, MountTuning> saved in MountSettings.Get.tunings)
+            {
+                if (saved.Value.ammoCapacity < 0f)
+                {
+                    saved.Value.ammoCapacity = MountSettings.Defaults.TryGetValue(saved.Key, out MountTuning baseline) ? baseline.ammoCapacity : 1f;
+                }
             }
             // A saved entry equal to the def's values carries no player choice; dropping it
             // lets a later XML or balance patch through. Also clears entries that older

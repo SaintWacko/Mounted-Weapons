@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+  <!-- A mounted weapon's magazine is multiplied by the mount's ammo capacity (MountExtension.ammoCapacityFactor). -->
+  <Operation Class="PatchOperationConditional">
+    <xpath>Defs/StatDef[defName="MagazineCapacity"]/parts</xpath>
+    <match Class="PatchOperationAdd">
+      <xpath>Defs/StatDef[defName="MagazineCapacity"]/parts</xpath>
+      <value>
+        <li Class="MountedWeapons.CE.StatPart_MountMagazine" />
+      </value>
+    </match>
+    <nomatch Class="PatchOperationAdd">
+      <xpath>Defs/StatDef[defName="MagazineCapacity"]</xpath>
+      <value>
+        <parts>
+          <li Class="MountedWeapons.CE.StatPart_MountMagazine" />
+        </parts>
+      </value>
+    </nomatch>
+  </Operation>
+</Patch>

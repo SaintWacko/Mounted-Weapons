@@ -16,4 +16,6 @@
   <!-- Manned mount settings tab, in place of MW_Settings_Stability(Hint) while Combat Extended is active. -->
   <MW_CE_Settings_Stability>Sway removed</MW_CE_Settings_Stability>
   <MW_CE_Settings_StabilityHint>Share of the weapon's sway the mount removes.</MW_CE_Settings_StabilityHint>
+  <!-- Magazine capacity stat explanation for a mounted weapon. {0} is the mount, {1} its multiplier, e.g. 2. -->
+  <MW_CE_StatMountMagazine>Mounted on {0}: x{1}</MW_CE_StatMountMagazine>
 </LanguageData>

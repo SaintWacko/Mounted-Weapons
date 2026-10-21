@@ -183,6 +183,44 @@ namespace MountedWeapons.CE
         }
 
         /// <summary>
+        /// CE caches MagazineCapacity for 250 ticks (CompAmmoUser.MagSize), so without this a
+        /// weapon just put on a mount kept its old magazine size for up to four seconds.
+        /// </summary>
+        public override void Notify_CapacityChanged(Building_WeaponMount mount, Thing weapon)
+        {
+            CE_StatDefOf.MagazineCapacity.Worker.ClearCacheForThing(weapon);
+        }
+
+        /// <summary>
+        /// The weapon is off the mount and back to its own magazine size. Rounds above that
+        /// are unloaded as ammo items beside the mount, the way CE's own unload drops them;
+        /// a part of one item that doesn't divide evenly (ammo whose item holds several
+        /// rounds) is lost. With CE's ammo system switched off, or no loaded type, the
+        /// magazine is just trimmed.
+        /// </summary>
+        public override void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
+        {
+            CE_StatDefOf.MagazineCapacity.Worker.ClearCacheForThing(weapon);
+            CompAmmoUser ammo = weapon.TryGetComp<CompAmmoUser>();
+            if (ammo == null || !ammo.HasMagazine) return;
+            int magSize = ammo.MagSize;
+            int excess = ammo.CurMagCount - magSize;
+            if (excess <= 0) return;
+            AmmoDef current = ammo.CurrentAmmo;
+            if (ammo.UseAmmo && current != null && mount.Spawned)
+            {
+                int items = excess / Math.Max(1, ammo.CurAmmoCount);
+                if (items > 0)
+                {
+                    Thing dropped = ThingMaker.MakeThing(current);
+                    dropped.stackCount = items;
+                    GenThing.TryDropAndSetForbidden(dropped, mount.DropCell, mount.Map, ThingPlaceMode.Near, out _, mount.Faction != Faction.OfPlayer);
+                }
+            }
+            ammo.CurMagCount = magSize;
+        }
+
+        /// <summary>
         /// The loaded type, as CE's magazine bar shows it, plus the type picked on the reload
         /// button when that differs: CE only swaps the magazine at the next reload, so
         /// without it the panel kept saying FMJ after AP was picked (run #2).

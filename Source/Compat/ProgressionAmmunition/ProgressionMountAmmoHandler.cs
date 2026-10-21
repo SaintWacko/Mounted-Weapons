@@ -91,6 +91,20 @@ namespace MountedWeapons.Ammo
             return comp.IsOutOfAmmo ? "MW_PA_InspectOutOfAmmo".Translate() : "PA_AmmoRemaining".Translate(comp.CurAmmo, comp.MaxAmmo);
         }
 
+        /// <summary>
+        /// The weapon is back to its own MaxAmmo; CompAmmo's setter clamps to it, so ammo
+        /// loaded above that is lost (the player's choice: P:A ammo is a count on the weapon,
+        /// with no item to hand back).
+        /// </summary>
+        public override void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
+        {
+            CompAmmo comp = weapon.TryGetComp<CompAmmo>();
+            if (comp != null && comp.CurAmmo > comp.MaxAmmo)
+            {
+                comp.CurAmmo = comp.MaxAmmo;
+            }
+        }
+
         public override IEnumerable<Gizmo> Gizmos(Building_WeaponMount mount)
         {
             if (MountAmmo.UsesAmmo(mount, out CompAmmo comp))
@@ -113,6 +127,23 @@ namespace MountedWeapons.Ammo
             {
                 __result = false;
             }
+        }
+    }
+
+    /// <summary>
+    /// A mounted weapon's max ammo is multiplied by its mount's ammoCapacityFactor. P:A
+    /// only applies its PA_MaxAmmoFactor stat for a pawn holding the weapon (CompAmmo.Holder);
+    /// a gun inside a turret has no holder, so the gunner's own stat never reaches it, which
+    /// is what we want: only the mount's multiplier counts.
+    /// </summary>
+    [HarmonyPatch(typeof(CompAmmo), nameof(CompAmmo.MaxAmmo), MethodType.Getter)]
+    public static class CompAmmo_MaxAmmo_MountCapacity
+    {
+        public static void Postfix(CompAmmo __instance, ref int __result)
+        {
+            Building_WeaponMount mount = Building_WeaponMount.HoldingMount(__instance.parent);
+            if (mount == null) return;
+            __result = UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(__result * mount.Ext.ammoCapacityFactor));
         }
     }
 

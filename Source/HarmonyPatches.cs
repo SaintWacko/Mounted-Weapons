@@ -13,6 +13,10 @@ namespace MountedWeapons
     /// manned mount we recompute the factor from the gunner, with the mount's stability
     /// removing part of their per-cell miss chance.
     ///
+    /// Stability is scaled by the gunner's Sight (capped at 100%): a rest steadies the
+    /// weapon but cannot aim it for someone who cannot see. Without this a blind gunner,
+    /// with far more miss chance to remove, gained several times what a sighted one did.
+    ///
     /// Postfix rather than a skipping prefix so other mods' prefixes on this method
     /// still run. The early returns keep it cheap: this runs for every shot and every
     /// hit-chance tooltip.
@@ -28,7 +32,8 @@ namespace MountedWeapons
             if (gunner == null) return;
 
             float perCell = gunner.GetStatValue(StatDefOf.ShootingAccuracyPawn);
-            perCell = 1f - (1f - perCell) * (1f - mount.Ext.stability);
+            float sight = Mathf.Clamp01(gunner.health.capacities.GetLevel(PawnCapacityDefOf.Sight));
+            perCell = 1f - (1f - perCell) * (1f - mount.Ext.stability * sight);
             // Recurses with a pawn caster, which this postfix ignores.
             __result = ShotReport.HitFactorFromShooter(gunner, distance, perCell);
         }

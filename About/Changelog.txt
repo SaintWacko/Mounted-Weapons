@@ -1,7 +1,6 @@
 Changelog
 Mounted Weapons
 
-Unreleased
 Added
 * Combat Extended support on RimWorld 1.6. Mounts fire CE ammo from the mounted weapon's own magazine and use its fire modes.
 * Under CE, gunners reload their own mount and CE haulers reload unmanned mounts. Mounts have no assigned loaders under CE.
@@ -13,6 +12,7 @@ Added
 * The shot tooltip for a selected gunner shows the mount's hit chance.
 * The mounted weapon shows under the gunner's portrait on the colonist bar.
 * A Perspective Shift avatar manning a mount gets the gunner fire button.
+* Mounts multiply the installed weapon's ammo capacity: the CE magazine size, or the Progression: Ammunition maximum. Manned mounts give x2, x3 and x4 by tier, automated mounts x2, x3, x4 and x5. Each mount's multiplier is in the mod settings. When the weapon is removed, CE rounds above its own magazine size are dropped beside the mount as ammo, and Progression: Ammunition ammo above its own maximum is lost.
 
 Changed
 * With fire at will off, a manned mount still fires at targets the player orders. Automated mounts keep vanilla hold fire.
@@ -22,7 +22,7 @@ Changed
 * Deselecting a gunner cancels its targeting.
 * A gunner who is incapable of violence cannot be ordered to fire.
 
-1.0.0 (unreleased)
+1.0.0
 Added
 * Weapon mounts that hold a real ranged weapon and fire it in place with more range and accuracy. A gunner's Shooting skill counts in full.
 * Manned mounts fire within a 120 degree arc around the way they face. The arc is set in the mod settings.

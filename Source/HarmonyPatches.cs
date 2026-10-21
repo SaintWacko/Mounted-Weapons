@@ -3,9 +3,30 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace MountedWeapons
 {
+    /// <summary>
+    /// AI pawns (raiders, defenders under a lord duty) man turrets through
+    /// JobGiver_ManTurrets, whose validator offers no hook. Without this a pawn who can't
+    /// fire the mounted weapon (no hands) would take the mount, be sent off it by the
+    /// 60-tick gunner check, and pick it again on its next think. Dropping the job here
+    /// stops that loop; the giver runs only when the pawn looks for work, never per tick.
+    /// </summary>
+    [HarmonyPatch(typeof(JobGiver_ManTurrets), "TryGiveJob")]
+    public static class Patch_JobGiver_ManTurrets_TryGiveJob
+    {
+        public static void Postfix(Pawn pawn, ref Job __result)
+        {
+            if (__result?.targetA.Thing is Building_WeaponMount mount && mount.HasWeapon
+                && MountUtility.CannotFireReason(pawn, mount.MountedWeapon) != null)
+            {
+                __result = null;
+            }
+        }
+    }
+
     /// <summary>
     /// Vanilla scores a shot by its caster: a pawn uses ShootingAccuracyPawn (skill,
     /// sight, manipulation, traits), anything else uses ShootingAccuracyTurret. A manned

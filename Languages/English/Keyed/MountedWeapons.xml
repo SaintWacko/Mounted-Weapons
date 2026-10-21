@@ -59,7 +59,7 @@
   <MW_Settings_AutomatedIntro>Values for each automated mount. Changes apply to mounts already built.</MW_Settings_AutomatedIntro>
   <MW_Settings_Range>Weapon range</MW_Settings_Range>
   <MW_Settings_Stability>Misses removed</MW_Settings_Stability>
-  <MW_Settings_StabilityHint>Share of the gunner's misses the mount turns into hits, per cell of distance.</MW_Settings_StabilityHint>
+  <MW_Settings_StabilityHint>Share of the gunner's misses the mount turns into hits, per cell of distance, for a gunner with full sight. Poorer sight gets less of it.</MW_Settings_StabilityHint>
   <MW_Settings_Accuracy>Accuracy per cell</MW_Settings_Accuracy>
   <MW_Settings_AccuracyHint>A level 8 shooter is about 96%, level 14 about 98%.</MW_Settings_AccuracyHint>
   <MW_Settings_Aim>Aiming time</MW_Settings_Aim>

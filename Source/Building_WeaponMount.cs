@@ -387,14 +387,14 @@ namespace MountedWeapons
 
         /// <summary>
         /// The Man option is greyed out for a pawn who can't fire the weapon, but a weapon
-        /// can be swapped while someone is manning, and other mods start the job their own
-        /// way. This catches both.
+        /// can be swapped while someone is manning, a gunner can lose their hands on the
+        /// mount, and other mods start the job their own way. This catches all three.
         /// </summary>
         private void CheckGunnerCanFire()
         {
             Pawn gunner = Gunner;
             if (gunner == null || !HasWeapon || gunner.CurJobDef != JobDefOf.ManTurret) return;
-            string reason = ModCompat.CannotFireReason(gunner, gun);
+            string reason = MountUtility.CannotFireReason(gunner, gun);
             if (reason == null) return;
             gunner.jobs.EndCurrentJob(JobCondition.InterruptForced);
             if (Faction == Faction.OfPlayer)
@@ -406,7 +406,7 @@ namespace MountedWeapons
 
         public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
         {
-            string reason = HasWeapon && IsManned ? ModCompat.CannotFireReason(selPawn, gun) : null;
+            string reason = HasWeapon && IsManned ? MountUtility.CannotFireReason(selPawn, gun) : null;
             // CompMannable's option, matched by its label: the comp offers no hook of its own.
             string manLabel = reason != null ? "OrderManThing".Translate(LabelShort, this).ToString() : null;
             foreach (FloatMenuOption option in base.GetFloatMenuOptions(selPawn))

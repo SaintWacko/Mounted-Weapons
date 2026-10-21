@@ -89,6 +89,22 @@ namespace MountedWeapons
             return false;
         }
 
+        /// <summary>
+        /// Null when the pawn may man a mount holding this weapon, otherwise the reason they
+        /// can't. A pawn needs the hands to equip the weapon (vanilla's equip rule: any
+        /// Manipulation above zero), and Progression: Education's proficiency when it is loaded.
+        /// Capacities are cached, so this is cheap enough for the 60-tick gunner check.
+        /// </summary>
+        public static string CannotFireReason(Pawn pawn, Thing weapon)
+        {
+            if (pawn == null || weapon == null) return null;
+            if (!pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
+            {
+                return "IncapableOfCapacity".Translate(PawnCapacityDefOf.Manipulation.label).CapitalizeFirst() + ".";
+            }
+            return ModCompat.CannotFireReason(pawn, weapon);
+        }
+
         /// <summary>Whether this particular weapon can go on a mount right now.</summary>
         public static bool CanMount(Thing weapon, out string reason)
         {

@@ -21,6 +21,7 @@ Changed
 * Gunners and pawns holding the same weapon get separate fire buttons when selected together, with squad attack covering both.
 * Deselecting a gunner cancels its targeting.
 * A gunner who is incapable of violence cannot be ordered to fire.
+* Without CE, a manned mount's stability now scales with the gunner's sight. A blind gunner gets no accuracy from the mount, and a gunner with one eye gets part of it. Before, a blind gunner gained several times more from a mount than a sighted one.
 
 1.0.0
 Added

@@ -1,8 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     RimWorld 1.7 build of the main assembly. Same shared C# as 1.6/Source (the mod's
-    top-level Source/ folder), compiled against the installed 1.7 game with RW17
-    defined. Output goes to 1.7/Assemblies, which LoadFolders.xml loads only on 1.7.
+    top-level Source/ folder), compiled with RW17 defined. Output goes to
+    1.7/Assemblies, which LoadFolders.xml loads only on 1.7.
+
+    The game references come from the Krafs.Rimworld.Ref package, so 1.7 builds
+    without the 1.7 game installed. Its 1.7 versions ship only ref/net10.0, which a
+    net472 PackageReference refuses (NU1202), so the package is fetched with
+    PackageDownload and its DLLs referenced by path. The assembly stays net472, as the
+    1.7 builds compiled against the installed game always were.
   -->
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -15,7 +21,8 @@
     <DefineConstants>$(DefineConstants);RW17</DefineConstants>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
-    <RimWorldBin>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/</RimWorldBin>
+    <RimRefVersion>1.7.4982-unstable</RimRefVersion>
+    <RimWorldBin>$(NuGetPackageRoot)krafs.rimworld.ref/$(RimRefVersion)/ref/net10.0/</RimWorldBin>
   </PropertyGroup>
   <ItemGroup>
     <!-- Top level only: Compat/ is its own assembly, and obj/ holds generated files. -->
@@ -23,6 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageDownload Include="Krafs.Rimworld.Ref" Version="[$(RimRefVersion)]" />
     <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>

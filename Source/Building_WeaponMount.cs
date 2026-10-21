@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -87,6 +88,57 @@ namespace MountedWeapons
 
         protected override bool HideForceTargetGizmo => !HasWeapon || AvatarControlled;
 
+        private static readonly AccessTools.FieldRef<Building_TurretGun, bool> holdFireRef =
+            AccessTools.FieldRefAccess<Building_TurretGun, bool>("holdFire");
+
+        // A manned mount's hold fire. The base class's own flag stops forced targets too
+        // (TryStartShootSomething, which isn't virtual, returns before reading one), but
+        // on a manned mount it is the gunner's fire at will, and a pawn with fire at will
+        // off still takes ordered shots. So a manned mount keeps the base flag clear and
+        // uses this one, which only TryFindNewTarget reads.
+        private bool holdAutoFire;
+
+        /// <summary>
+        /// Hold fire, as the mount's Hold fire toggle and the gunner's fire-at-will toggle
+        /// show it. On a manned mount it stops the mount picking targets itself; ordered
+        /// targets still fire. On an automated mount it is the vanilla turret flag, which
+        /// stops every shot and clears the forced target.
+        /// </summary>
+        public bool HoldFire
+        {
+            get => IsManned ? holdAutoFire : holdFireRef(this);
+            set
+            {
+                if (!IsManned)
+                {
+                    holdFireRef(this) = value;
+                    // With an invalid target the base only clears the forced target.
+                    if (value) base.OrderAttack(LocalTargetInfo.Invalid);
+                    return;
+                }
+                holdAutoFire = value;
+                if (value && currentTargetInt.IsValid && currentTargetInt != forcedTarget && !AttackVerb.Bursting)
+                {
+                    // Drops a target the mount picked itself and is still aiming at.
+                    currentTargetInt = LocalTargetInfo.Invalid;
+                    burstWarmupTicksLeft = 0;
+                    fireReadyTick = -1;
+                }
+            }
+        }
+
+        // Building_TurretGun's private PlayerControlled, which decides whether hold fire can
+        // be toggled (mounts are never activable, so that part is left out).
+        private bool HoldFireToggleable
+        {
+            get
+            {
+                Pawn gunner = Gunner;
+                if (gunner != null) return gunner.Faction == Faction.OfPlayer;
+                return Faction == Faction.OfPlayer;
+            }
+        }
+
         private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
         // ---------------------------------------------------------------- firing arc
@@ -107,6 +159,8 @@ namespace MountedWeapons
         {
             // The inhabited pawn fires only when the player clicks (TryAvatarFire).
             if (AvatarControlled) return LocalTargetInfo.Invalid;
+            // Hold fire on a manned mount: forced targets never come through here.
+            if (IsManned && holdAutoFire) return LocalTargetInfo.Invalid;
             if (MountAmmoHandler.Active != null && MountAmmoHandler.Active.OutOfAmmo(this)) return LocalTargetInfo.Invalid;
             if (FiringArc.Unlimited(Arc) || !HasWeapon) return base.TryFindNewTarget();
             // Same search as the base, with the arc added to its validator. The base's
@@ -168,13 +222,8 @@ namespace MountedWeapons
             Blueprint_Install blueprint = InstallBlueprintUtility.ExistingBlueprintFor(this);
             if (blueprint != null) GenDraw.DrawLineBetween(this.TrueCenter(), blueprint.TrueCenter());
 
-            FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
-            if (HasWeapon)
-            {
-                // The minimum range stays a full ring: it's where the gun can't fire at all.
-                float minRange = AttackVerb.verbProps.EffectiveMinRange(allowAdjacentShot: true);
-                if (minRange > 0.1f && minRange < 90f && minRange < radius) GenDraw.DrawRadiusRing(Position, minRange);
-            }
+            if (HasWeapon) DrawFireField();
+            else FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
             if (burstWarmupTicksLeft > 0)
             {
                 GenDraw.DrawAimPie(this, CurrentTarget, (int)(burstWarmupTicksLeft * 0.5f), def.size.x * 0.5f);
@@ -187,6 +236,26 @@ namespace MountedWeapons
                 a.y = b.y;
                 GenDraw.DrawLineBetween(a, b, ForcedTargetLineMat);
             }
+        }
+
+        /// <summary>
+        /// Where the weapon can fire: the arc out to its range, or the full range ring for an
+        /// unlimited arc. Drawn when the mount is selected and when the player hovers a
+        /// gunner's fire button.
+        /// </summary>
+        public void DrawFireField()
+        {
+            if (!HasWeapon) return;
+            if (FiringArc.Unlimited(Arc))
+            {
+                AttackVerb.verbProps.DrawRadiusRing(Position, AttackVerb);
+                return;
+            }
+            float radius = AttackVerb.EffectiveRange;
+            FiringArc.DrawField(Position, Rotation, Arc, radius, Map);
+            // The minimum range stays a full ring: it's where the gun can't fire at all.
+            float minRange = AttackVerb.verbProps.EffectiveMinRange(allowAdjacentShot: true);
+            if (minRange > 0.1f && minRange < 90f && minRange < radius) GenDraw.DrawRadiusRing(Position, minRange);
         }
 
         private void RescaleRanges()
@@ -209,6 +278,12 @@ namespace MountedWeapons
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
+            if (IsManned && holdFireRef(this))
+            {
+                // Saved before manned mounts had their own flag (or set by another mod).
+                holdFireRef(this) = false;
+                holdAutoFire = true;
+            }
             PrepareMountedWeapon();
             // A mount reinstalled from a minified item keeps its clones; settings may have
             // changed while it was packed up.
@@ -227,6 +302,7 @@ namespace MountedWeapons
             base.ExposeData();
             Scribe_References.Look(ref pendingWeapon, "pendingWeapon");
             Scribe_Values.Look(ref fireReadyTick, "fireReadyTick", -1);
+            Scribe_Values.Look(ref holdAutoFire, "holdAutoFire", false);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 // The base already rebound caster and callback; this adds the range clones.
@@ -249,6 +325,12 @@ namespace MountedWeapons
             {
                 // A forced target walked out of the arc.
                 ResetTargeting();
+            }
+            if (holdAutoFire && !HoldFireToggleable)
+            {
+                // Vanilla clears its own flag the same way once the player loses control,
+                // and hides the toggle, so nobody could switch it back.
+                holdAutoFire = false;
             }
             base.Tick();
             if (avatar && avatarAim >= 0f && !AvatarShooting)
@@ -457,9 +539,22 @@ namespace MountedWeapons
             // A new order restarts aiming; a warmup that was about to finish must not
             // carry over to the new target. Compared after the base runs, because the
             // base turns down out-of-range orders without changing the target.
+            // Several gunners' fire buttons clicked at once share one targeter, led by this
+            // mount; the others get the same target.
+            GunnerTargeting.OrderOthers(this, targ);
             if (targ.IsValid && !InArc(targ))
             {
                 Messages.Message("MW_TargetOutsideArc".Translate(), this, MessageTypeDefOf.RejectInput, historical: false);
+                return;
+            }
+            if (AvatarControlled)
+            {
+                // Perspective Shift's avatar has no forced target (CanSetForcedTarget): its
+                // fire button fires one burst, as a click on the target does.
+                if (targ.IsValid && !TryAvatarFire(targ))
+                {
+                    Messages.Message("MW_MountCannotFireNow".Translate(), this, MessageTypeDefOf.RejectInput, historical: false);
+                }
                 return;
             }
             LocalTargetInfo before = forcedTarget;
@@ -762,8 +857,17 @@ namespace MountedWeapons
 
         public override IEnumerable<Gizmo> GetGizmos()
         {
+            string holdFireLabel = IsManned ? "CommandHoldFire".Translate().ToString() : null;
             foreach (Gizmo gizmo in base.GetGizmos())
             {
+                if (holdFireLabel != null && gizmo is Command_Toggle toggle && toggle.hotKey == KeyBindingDefOf.Misc6
+                    && toggle.defaultLabel == holdFireLabel)
+                {
+                    // The base toggle is bound to its own flag; a manned mount uses holdAutoFire.
+                    toggle.isActive = () => HoldFire;
+                    toggle.toggleAction = () => HoldFire = !HoldFire;
+                    toggle.defaultDesc = "MW_CommandHoldFireMannedDesc".Translate();
+                }
                 yield return gizmo;
             }
             if (Faction != Faction.OfPlayer) yield break;

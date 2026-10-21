@@ -1,6 +1,27 @@
 Changelog
 Mounted Weapons
 
+Unreleased
+Added
+* Combat Extended support on RimWorld 1.6. Mounts fire CE ammo from the mounted weapon's own magazine and use its fire modes.
+* Under CE, gunners reload their own mount and CE haulers reload unmanned mounts. Mounts have no assigned loaders under CE.
+* Under CE, a manned mount's stability reduces the weapon's sway.
+* With Perspective Shift and CE, an inhabited gunner still takes CE's aiming time in Aimed fire mode. Perspective Shift's aiming delay option only skips the mount's own warmup.
+* A pawn manning a mount shows the mounted weapon's fire button (B) in place of their own weapon's. Hovering it draws the mount's firing arc and range. Under CE the mount's ammo, reload and fire mode buttons show as well.
+* The gunner's fire at will toggle controls the mount, drafted or not.
+* Drafted right click "Fire at" and squad attack order shots through the mount, and the gunner stays on it. Targets outside the arc are refused.
+* The shot tooltip for a selected gunner shows the mount's hit chance.
+* The mounted weapon shows under the gunner's portrait on the colonist bar.
+* A Perspective Shift avatar manning a mount gets the gunner fire button.
+
+Changed
+* With fire at will off, a manned mount still fires at targets the player orders. Automated mounts keep vanilla hold fire.
+* Under CE, weapons that use ammo but have no magazine cannot be mounted. Bows and thrown weapons stay excluded.
+* With both Combat Extended and Progression: Ammunition active, CE handles mount ammo and Progression: Ammunition does not.
+* Gunners and pawns holding the same weapon get separate fire buttons when selected together, with squad attack covering both.
+* Deselecting a gunner cancels its targeting.
+* A gunner who is incapable of violence cannot be ordered to fire.
+
 1.0.0 (unreleased)
 Added
 * Weapon mounts that hold a real ranged weapon and fire it in place with more range and accuracy. A gunner's Shooting skill counts in full.

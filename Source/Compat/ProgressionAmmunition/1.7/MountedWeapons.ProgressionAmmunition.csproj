@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
     Progression: Ammunition support for RimWorld 1.7. Same shared C# as the 1.6 project
-    (the files one folder up), compiled against the installed 1.7 game, with output in
-    Compat/ProgressionAmmunition/1.7/Assemblies.
+    (the files one folder up), with output in Compat/ProgressionAmmunition/1.7/Assemblies.
+    Game references come from the Krafs.Rimworld.Ref package by PackageDownload, for the
+    reason given in 1.7/Source/MountedWeapons.csproj (its 1.7 versions are net10.0 only).
 
     P:A only ships a 1.6 folder so far, so this references its 1.6 DLL. When P:A adds a
     1.7 build, point the HintPath at it.
@@ -22,13 +23,15 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
-    <RimWorldBin>/Users/tirrella/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorld.app/Contents/MacOS/</RimWorldBin>
+    <RimRefVersion>1.7.4982-unstable</RimRefVersion>
+    <RimWorldBin>$(NuGetPackageRoot)krafs.rimworld.ref/$(RimRefVersion)/ref/net10.0/</RimWorldBin>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageDownload Include="Krafs.Rimworld.Ref" Version="[$(RimRefVersion)]" />
     <PackageReference Include="Lib.Harmony" Version="2.4.1" PrivateAssets="all">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>

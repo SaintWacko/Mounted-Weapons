@@ -455,7 +455,13 @@ namespace MountedWeapons
         /// Takes the weapon off the mount and returns it unspawned, with fresh verbs so
         /// a pawn can equip it normally. Returns null when the mount is empty.
         /// </summary>
-        public Thing RemoveWeapon()
+        public Thing RemoveWeapon() => RemoveWeapon(trimAmmo: true);
+
+        /// <param name="trimAmmo">
+        /// False only when the weapon may go straight back on (Notify_Minifying): the caller
+        /// then runs MountAmmoHandler.Notify_WeaponRemoved itself once the weapon is really off.
+        /// </param>
+        private Thing RemoveWeapon(bool trimAmmo)
         {
             if (!HasWeapon) return null;
             Thing weapon = gun;
@@ -474,7 +480,10 @@ namespace MountedWeapons
             ResetTargeting();
             // After the gun swap, so the weapon's capacity is back to its own when the
             // handler trims the ammo above it.
-            MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
+            if (trimAmmo)
+            {
+                MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
+            }
             return weapon;
         }
 
@@ -714,10 +723,16 @@ namespace MountedWeapons
         {
             pendingWeapon = null;
             if (!Spawned) return;
-            Thing weapon = RemoveWeapon();
+            // Untrimmed: a weapon that goes back on below must keep the mount's extra ammo.
+            Thing weapon = RemoveWeapon(trimAmmo: false);
+            if (weapon != null && GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near))
+            {
+                MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
+                return;
+            }
             // With nowhere to drop it (a boxed-in mount), the weapon goes back on and
             // packs up with the mount rather than being left unspawned and lost.
-            if (weapon != null && !GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near))
+            if (weapon != null)
             {
                 InstallWeapon(weapon);
             }

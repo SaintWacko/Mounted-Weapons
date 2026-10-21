@@ -193,9 +193,11 @@ namespace MountedWeapons.CE
 
         /// <summary>
         /// The weapon is off the mount and back to its own magazine size. Rounds above that
-        /// are unloaded as ammo items beside the mount, the way CE's own unload drops them;
-        /// a part of one item that doesn't divide evenly (ammo whose item holds several
-        /// rounds) is lost. With CE's ammo system switched off, or no loaded type, the
+        /// are unloaded as ammo items beside the mount, the way CE's own unload
+        /// (CompAmmoUser.TryUnload) drops them: whole items of the loaded type, then any
+        /// remainder (ammo whose item holds several rounds) as the type's
+        /// partialUnloadAmmoDef. Without one the remainder is lost, and CE's unload skips
+        /// it the same way. With CE's ammo system switched off, or no loaded type, the
         /// magazine is just trimmed.
         /// </summary>
         public override void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
@@ -209,15 +211,19 @@ namespace MountedWeapons.CE
             AmmoDef current = ammo.CurrentAmmo;
             if (ammo.UseAmmo && current != null && mount.Spawned)
             {
-                int items = excess / Math.Max(1, ammo.CurAmmoCount);
-                if (items > 0)
-                {
-                    Thing dropped = ThingMaker.MakeThing(current);
-                    dropped.stackCount = items;
-                    GenThing.TryDropAndSetForbidden(dropped, mount.DropCell, mount.Map, ThingPlaceMode.Near, out _, mount.Faction != Faction.OfPlayer);
-                }
+                int perItem = Math.Max(1, ammo.CurAmmoCount);
+                Drop(mount, current, excess / perItem);
+                Drop(mount, current.partialUnloadAmmoDef, excess % perItem);
             }
             ammo.CurMagCount = magSize;
+        }
+
+        private static void Drop(Building_WeaponMount mount, ThingDef def, int count)
+        {
+            if (def == null || count <= 0) return;
+            Thing dropped = ThingMaker.MakeThing(def);
+            dropped.stackCount = count;
+            GenThing.TryDropAndSetForbidden(dropped, mount.DropCell, mount.Map, ThingPlaceMode.Near, out _, mount.Faction != Faction.OfPlayer);
         }
 
         /// <summary>

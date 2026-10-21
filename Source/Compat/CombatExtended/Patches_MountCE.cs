@@ -7,6 +7,26 @@ using Verse;
 namespace MountedWeapons.CE
 {
     /// <summary>
+    /// CE swaps the duty job givers for its own ManTurrets subclasses, which override
+    /// TryGiveJob without calling base, so the vanilla postfix that keeps a pawn who can't
+    /// fire the mounted weapon off the mount never runs. Same postfix, on CE's overrides.
+    /// </summary>
+    [HarmonyPatch]
+    public static class Patch_JobGiver_ManTurretsCE_TryGiveJob
+    {
+        public static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
+        {
+            yield return AccessTools.DeclaredMethod(typeof(JobGiver_ManTurretsNearSelfCE), nameof(JobGiver_ManTurretsNearSelfCE.TryGiveJob));
+            yield return AccessTools.DeclaredMethod(typeof(JobGiver_ManTurretsNearPointCE), nameof(JobGiver_ManTurretsNearPointCE.TryGiveJob));
+        }
+
+        public static void Postfix(Pawn pawn, ref Verse.AI.Job __result)
+        {
+            Patch_JobGiver_ManTurrets_TryGiveJob.Postfix(pawn, ref __result);
+        }
+    }
+
+    /// <summary>
     /// CE runs out of ammo by calling CompAmmoUser.TryStartReload from the verb (after the
     /// last shot, and when a cast starts on an empty magazine). For a turret that goes to
     /// TurretRegistry.TryOrderReload, which puts the gunner on a reload job. The pawn the

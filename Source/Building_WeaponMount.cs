@@ -312,6 +312,11 @@ namespace MountedWeapons
             // changed while it was packed up.
             RescaleRanges();
             MountCombatHandler.Active?.Notify_Spawned(this);
+            if (HasWeapon)
+            {
+                // Same reason: the capacity setting may have changed while it was packed up.
+                MountAmmoHandler.Active?.Notify_CapacityChanged(this, gun);
+            }
         }
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)

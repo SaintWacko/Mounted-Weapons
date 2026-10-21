@@ -32,5 +32,22 @@ namespace MountedWeapons
         public virtual void OrderReload(Pawn pawn, Building_WeaponMount mount)
         {
         }
+
+        /// <summary>
+        /// The weapon's ammo capacity changed because it went on this mount or the mount's
+        /// capacity setting changed. For handlers that cache the capacity.
+        /// </summary>
+        public virtual void Notify_CapacityChanged(Building_WeaponMount mount, Thing weapon)
+        {
+        }
+
+        /// <summary>
+        /// The weapon has just come off the mount and is back to its own capacity. Ammo
+        /// loaded above that capacity is trimmed here. The mount is still spawned when the
+        /// weapon came off a spawned mount.
+        /// </summary>
+        public virtual void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
+        {
+        }
     }
 }

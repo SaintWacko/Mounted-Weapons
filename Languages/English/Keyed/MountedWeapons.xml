@@ -63,5 +63,7 @@
   <MW_Settings_Accuracy>Accuracy per cell</MW_Settings_Accuracy>
   <MW_Settings_AccuracyHint>A level 8 shooter is about 96%, level 14 about 98%.</MW_Settings_AccuracyHint>
   <MW_Settings_Aim>Aiming time</MW_Settings_Aim>
+  <MW_Settings_AmmoCapacity>Ammo capacity</MW_Settings_AmmoCapacity>
+  <MW_Settings_AmmoCapacityHint>Multiplies the mounted weapon's magazine size (Combat Extended) or maximum ammo (Progression: Ammunition). When the weapon is removed, Combat Extended ammo above its own capacity is dropped beside the mount, and Progression: Ammunition ammo above it is lost.</MW_Settings_AmmoCapacityHint>
 
 </LanguageData>

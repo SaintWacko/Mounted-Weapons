@@ -140,6 +140,13 @@ namespace MountedWeapons
                         "MW_Settings_AccuracyHint".Translate(), 0.001f);
                 }
                 Slider(l, "MW_Settings_Aim".Translate(), ref t.warmupFactor, 0.25f, 1.5f, t.warmupFactor.ToStringPercent(), null, 0.05f);
+                // Capacity only exists under an ammo mod (CE or Progression: Ammunition),
+                // which is what sets the ammo handler.
+                if (MountAmmoHandler.Active != null)
+                {
+                    Slider(l, "MW_Settings_AmmoCapacity".Translate(), ref t.ammoCapacity, 1f, 10f, "x" + t.ammoCapacity.ToString("0.#"),
+                        "MW_Settings_AmmoCapacityHint".Translate(), 0.5f);
+                }
                 if (!saved && !t.SameAs(baseline))
                 {
                     Settings.tunings[def.defName] = t;

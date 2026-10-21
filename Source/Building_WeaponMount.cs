@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
 using RimWorld;
@@ -55,6 +56,24 @@ namespace MountedWeapons
         public bool HasWeapon => gun != null && gun.def != def.building.turretGunDef;
 
         public Thing MountedWeapon => HasWeapon ? gun : null;
+
+        // Weapon -> the mount holding it. A gun inside a turret has no holdingOwner, so
+        // nothing in vanilla can answer "is this weapon on a mount?", and the ammo
+        // capacity hooks (CE's magazine stat, P:A's MaxAmmo) only see the weapon. Weak
+        // keys, so a weapon destroyed or left behind in an unloaded game is never kept
+        // alive by this table; thread-safe, so a stat read off the main thread is fine.
+        private static readonly ConditionalWeakTable<Thing, Building_WeaponMount> holders =
+            new ConditionalWeakTable<Thing, Building_WeaponMount>();
+
+        /// <summary>
+        /// The mount this weapon is installed on, or null. An entry left over from a mount
+        /// that has since let go of the weapon is ignored by the gun check.
+        /// </summary>
+        public static Building_WeaponMount HoldingMount(Thing weapon)
+        {
+            if (weapon == null || !holders.TryGetValue(weapon, out Building_WeaponMount mount)) return null;
+            return mount.gun == weapon ? mount : null;
+        }
 
         public Pawn Gunner => mannableComp?.ManningPawn;
 
@@ -139,7 +158,7 @@ namespace MountedWeapons
             }
         }
 
-        private IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
+        public IntVec3 DropCell => def.hasInteractionCell ? InteractionCell : Position;
 
         // ---------------------------------------------------------------- firing arc
 
@@ -269,6 +288,10 @@ namespace MountedWeapons
         public void Notify_SettingsChanged()
         {
             RescaleRanges();
+            if (HasWeapon)
+            {
+                MountAmmoHandler.Active?.Notify_CapacityChanged(this, gun);
+            }
             if (forcedTarget.IsValid && !InArc(forcedTarget))
             {
                 ResetTargeting();
@@ -289,6 +312,11 @@ namespace MountedWeapons
             // changed while it was packed up.
             RescaleRanges();
             MountCombatHandler.Active?.Notify_Spawned(this);
+            if (HasWeapon)
+            {
+                // Same reason: the capacity setting may have changed while it was packed up.
+                MountAmmoHandler.Active?.Notify_CapacityChanged(this, gun);
+            }
         }
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
@@ -419,6 +447,7 @@ namespace MountedWeapons
             baseRanges.Clear();
             PrepareMountedWeapon();
             MountCombatHandler.Active?.Notify_WeaponInstalled(this, weapon);
+            MountAmmoHandler.Active?.Notify_CapacityChanged(this, weapon);
             ResetTargeting();
             burstCooldownTicksLeft = 0;
             if (pendingWeapon == weapon)
@@ -431,11 +460,18 @@ namespace MountedWeapons
         /// Takes the weapon off the mount and returns it unspawned, with fresh verbs so
         /// a pawn can equip it normally. Returns null when the mount is empty.
         /// </summary>
-        public Thing RemoveWeapon()
+        public Thing RemoveWeapon() => RemoveWeapon(trimAmmo: true);
+
+        /// <param name="trimAmmo">
+        /// False only when the weapon may go straight back on (Notify_Minifying): the caller
+        /// then runs MountAmmoHandler.Notify_WeaponRemoved itself once the weapon is really off.
+        /// </param>
+        private Thing RemoveWeapon(bool trimAmmo)
         {
             if (!HasWeapon) return null;
             Thing weapon = gun;
             MountCombatHandler.Active?.Notify_WeaponRemoved(this, weapon);
+            holders.Remove(weapon);
             CompEquippable eq = weapon.TryGetComp<CompEquippable>();
             if (eq != null)
             {
@@ -447,12 +483,21 @@ namespace MountedWeapons
             appliedProps.Clear();
             baseRanges.Clear();
             ResetTargeting();
+            // After the gun swap, so the weapon's capacity is back to its own when the
+            // handler trims the ammo above it.
+            if (trimAmmo)
+            {
+                MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
+            }
             return weapon;
         }
 
         private void PrepareMountedWeapon()
         {
             if (!HasWeapon) return;
+            // Runs on install, spawn and load, so the table is rebuilt from the save.
+            holders.Remove(gun);
+            holders.Add(gun, this);
             CompEquippable eq = gun.TryGetComp<CompEquippable>();
             if (eq == null) return;
             List<Verb> verbs = eq.AllVerbs;
@@ -683,10 +728,16 @@ namespace MountedWeapons
         {
             pendingWeapon = null;
             if (!Spawned) return;
-            Thing weapon = RemoveWeapon();
+            // Untrimmed: a weapon that goes back on below must keep the mount's extra ammo.
+            Thing weapon = RemoveWeapon(trimAmmo: false);
+            if (weapon != null && GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near))
+            {
+                MountAmmoHandler.Active?.Notify_WeaponRemoved(this, weapon);
+                return;
+            }
             // With nowhere to drop it (a boxed-in mount), the weapon goes back on and
             // packs up with the mount rather than being left unspawned and lost.
-            if (weapon != null && !GenPlace.TryPlaceThing(weapon, DropCell, Map, ThingPlaceMode.Near))
+            if (weapon != null)
             {
                 InstallWeapon(weapon);
             }

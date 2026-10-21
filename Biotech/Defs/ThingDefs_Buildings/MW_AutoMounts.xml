@@ -59,6 +59,7 @@
         <coreDef>SubcoreBasic</coreDef>
         <rangeMultiplier>1.2</rangeMultiplier>
         <warmupFactor>1.0</warmupFactor>
+        <ammoCapacityFactor>2</ammoCapacityFactor>
       </li>
     </modExtensions>
   </ThingDef>
@@ -105,6 +106,7 @@
         <coreDef>SubcoreRegular</coreDef>
         <rangeMultiplier>1.25</rangeMultiplier>
         <warmupFactor>0.9</warmupFactor>
+        <ammoCapacityFactor>3</ammoCapacityFactor>
       </li>
     </modExtensions>
   </ThingDef>
@@ -151,6 +153,7 @@
         <coreDef>SubcoreHigh</coreDef>
         <rangeMultiplier>1.3</rangeMultiplier>
         <warmupFactor>0.8</warmupFactor>
+        <ammoCapacityFactor>4</ammoCapacityFactor>
         <allowForcedTarget>true</allowForcedTarget>
       </li>
     </modExtensions>
@@ -197,6 +200,7 @@
         <coreDef>AIPersonaCore</coreDef>
         <rangeMultiplier>1.35</rangeMultiplier>
         <warmupFactor>0.7</warmupFactor>
+        <ammoCapacityFactor>5</ammoCapacityFactor>
         <allowForcedTarget>true</allowForcedTarget>
       </li>
     </modExtensions>

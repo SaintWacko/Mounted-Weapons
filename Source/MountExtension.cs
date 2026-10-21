@@ -22,6 +22,12 @@ namespace MountedWeapons
         /// <summary>Weapon's own warmup (aim time) is multiplied by this.</summary>
         public float warmupFactor = 1f;
 
+        /// <summary>
+        /// Installed weapon's ammo capacity is multiplied by this: CE's magazine size or
+        /// Progression: Ammunition's max ammo. No effect without an ammo mod.
+        /// </summary>
+        public float ammoCapacityFactor = 1f;
+
         /// <summary>Weapon's own cooldown is multiplied by this.</summary>
         public float cooldownFactor = 1f;
 

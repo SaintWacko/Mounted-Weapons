@@ -183,6 +183,50 @@ namespace MountedWeapons.CE
         }
 
         /// <summary>
+        /// CE caches MagazineCapacity for 250 ticks (CompAmmoUser.MagSize), so without this a
+        /// weapon just put on a mount kept its old magazine size for up to four seconds.
+        /// </summary>
+        public override void Notify_CapacityChanged(Building_WeaponMount mount, Thing weapon)
+        {
+            CE_StatDefOf.MagazineCapacity.Worker.ClearCacheForThing(weapon);
+        }
+
+        /// <summary>
+        /// The weapon is off the mount and back to its own magazine size. Rounds above that
+        /// are unloaded as ammo items beside the mount, the way CE's own unload
+        /// (CompAmmoUser.TryUnload) drops them: whole items of the loaded type, then any
+        /// remainder (ammo whose item holds several rounds) as the type's
+        /// partialUnloadAmmoDef. Without one the remainder is lost, and CE's unload skips
+        /// it the same way. With CE's ammo system switched off, or no loaded type, the
+        /// magazine is just trimmed.
+        /// </summary>
+        public override void Notify_WeaponRemoved(Building_WeaponMount mount, Thing weapon)
+        {
+            CE_StatDefOf.MagazineCapacity.Worker.ClearCacheForThing(weapon);
+            CompAmmoUser ammo = weapon.TryGetComp<CompAmmoUser>();
+            if (ammo == null || !ammo.HasMagazine) return;
+            int magSize = ammo.MagSize;
+            int excess = ammo.CurMagCount - magSize;
+            if (excess <= 0) return;
+            AmmoDef current = ammo.CurrentAmmo;
+            if (ammo.UseAmmo && current != null && mount.Spawned)
+            {
+                int perItem = Math.Max(1, ammo.CurAmmoCount);
+                Drop(mount, current, excess / perItem);
+                Drop(mount, current.partialUnloadAmmoDef, excess % perItem);
+            }
+            ammo.CurMagCount = magSize;
+        }
+
+        private static void Drop(Building_WeaponMount mount, ThingDef def, int count)
+        {
+            if (def == null || count <= 0) return;
+            Thing dropped = ThingMaker.MakeThing(def);
+            dropped.stackCount = count;
+            GenThing.TryDropAndSetForbidden(dropped, mount.DropCell, mount.Map, ThingPlaceMode.Near, out _, mount.Faction != Faction.OfPlayer);
+        }
+
+        /// <summary>
         /// The loaded type, as CE's magazine bar shows it, plus the type picked on the reload
         /// button when that differs: CE only swaps the magazine at the next reload, so
         /// without it the panel kept saying FMJ after AP was picked (run #2).

@@ -29,6 +29,7 @@
         <rangeMultiplier>1.15</rangeMultiplier>
         <stability>0.2</stability>
         <warmupFactor>1.0</warmupFactor>
+        <ammoCapacityFactor>2</ammoCapacityFactor>
       </li>
     </modExtensions>
   </ThingDef>
@@ -80,6 +81,7 @@
         <rangeMultiplier>1.25</rangeMultiplier>
         <stability>0.35</stability>
         <warmupFactor>0.9</warmupFactor>
+        <ammoCapacityFactor>3</ammoCapacityFactor>
       </li>
     </modExtensions>
   </ThingDef>
@@ -127,6 +129,7 @@
         <rangeMultiplier>1.35</rangeMultiplier>
         <stability>0.5</stability>
         <warmupFactor>0.8</warmupFactor>
+        <ammoCapacityFactor>4</ammoCapacityFactor>
         <shieldTexPath>Things/Building/Security/MW_GunShield</shieldTexPath>
         <shieldTopTexPath>Things/Building/Security/MW_GunShield_Top</shieldTopTexPath>
         <shieldDrawSize>(1.5,1.5)</shieldDrawSize>
